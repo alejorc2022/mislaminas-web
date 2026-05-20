@@ -1,6 +1,7 @@
 // Ajuste de total: 1 (00) + 960 (48 selecciones) + 19 (FWC 1-19) + 14 (CC 1-14) = 994
 const TOTAL_LAMINAS = 994; 
 
+// Listado de abreviaturas base obtenidas de tu planilla de control 
 const TEAMS = [
     "FWC", "MEX", "RSA", "KOR", "CZE", "CAN", "BIH", "QAT", "SUI", "BRA", 
     "MAR", "HAI", "SCO", "USA", "PAR", "AUS", "TUR", "GER", "CUW", "CIV", 
@@ -9,45 +10,61 @@ const TEAMS = [
     "JOR", "POR", "COD", "UZB", "COL", "ENG", "CRO", "GHA", "PAN", "CC"
 ];
 
+// Diccionario de traducciones al español para cada abreviatura 
+const TEAM_NAMES = {
+    "MEX": "MÉXICO", "RSA": "SUDÁFRICA", "KOR": "COREA DEL SUR", "CZE": "REPÚBLICA CHECA",
+    "CAN": "CANADÁ", "BIH": "BOSNIA Y HERZEGOVINA", "QAT": "CATAR", "SUI": "SUIZA",
+    "BRA": "BRASIL", "MAR": "MARRUECOS", "HAI": "HAITÍ", "SCO": "ESCOCIA",
+    "USA": "ESTADOS UNIDOS", "PAR": "PARAGUAY", "AUS": "AUSTRALIA", "TUR": "TURQUÍA",
+    "GER": "ALEMANIA", "CUW": "CURAZAO", "CIV": "COSTA DE MARFIL", "ECU": "ECUADOR",
+    "NED": "PAÍSES BAJOS", "JPN": "JAPÓN", "SWE": "SUECIA", "TUN": "TÚNEZ",
+    "BEL": "BÉLGICA", "EGY": "EGIPTO", "IRN": "IRÁN", "NZL": "NUEVA ZELANDA",
+    "ESP": "ESPAÑA", "CPV": "CABO VERDE", "KSA": "ARABIA SAUDITA", "URU": "URUGUAY",
+    "FRA": "FRANCIA", "SEN": "SENEGAL", "IRQ": "IRAK", "NOR": "NORUEGA",
+    "ARG": "ARGENTINA", "ALG": "ARGELIA", "AUT": "AUSTRIA", "JOR": "JORDANIA",
+    "POR": "PORTUGAL", "COD": "REP. DEM. DEL CONGO", "UZB": "UZBEKISTÁN", "COL": "COLOMBIA",
+    "ENG": "INGLATERRA", "CRO": "CROACIA", "GHA": "GHANA", "PAN": "PANAMÁ"
+};
+
 let collection = JSON.parse(localStorage.getItem('mundial2026_data')) || {};
 const container = document.getElementById('album-container');
 
 function initAlbum() {
     container.innerHTML = ''; 
     
-    // 1. Crear lámina 00
-    createSection("Especiales", ["00"]);
+    // 1. Crear sección inicial con la nueva etiqueta en mayúsculas
+    createSection("ESPECIALES", ["00"], "ESPECIALES");
 
-    // 2. Generar secciones según tu planilla [cite: 61]
+    // 2. Generar secciones combinando código y nombre completo
     TEAMS.forEach(team => {
         let stickers = [];
         
         if (team === "FWC") {
-            // Ahora inicia directamente en FWC1 hasta FWC19
             for(let i = 1; i <= 19; i++) stickers.push(`FWC${i}`);
+            createSection("FWC", stickers, "FWC"); // FWC se mantiene sin cambios
         } 
         else if (team === "CC") {
-            // Coca-Cola del 1 al 14 
             for(let i = 1; i <= 14; i++) stickers.push(`CC${i}`);
+            createSection("CC", stickers, "CC"); // CC se mantiene sin cambios
         } 
         else {
-            // Selecciones estándar: 20 láminas cada una [cite: 71, 82, 94]
             for(let i = 1; i <= 20; i++) stickers.push(`${team}${i}`);
+            // Construye la etiqueta combinada, ej: "COL - COLOMBIA"
+            const fullTitle = `${team} - ${TEAM_NAMES[team] || ''}`; 
+            createSection(fullTitle, stickers, team);
         }
-        
-        createSection(team, stickers);
     });
     
     updateProgress();
 }
 
-function createSection(title, stickers) {
+function createSection(displayTitle, stickers, teamCode) {
     const section = document.createElement('section');
     section.className = 'team-section';
     section.innerHTML = `
         <div class="team-title">
-            <span>${title}</span>
-            <small id="count-${title}">0/${stickers.length}</small>
+            <span>${displayTitle}</span>
+            <small id="count-${teamCode}">0/${stickers.length}</small>
         </div>
         <div class="sticker-grid"></div>
     `;
@@ -57,18 +74,17 @@ function createSection(title, stickers) {
         const div = document.createElement('div');
         div.className = `sticker ${collection[id] ? 'obtained' : ''}`;
         
-        // Mantener el color especial para 00 y Coca-Cola [cite: 52]
         if(id === "00" || id.includes("CC")) div.classList.add('special');
         
         div.innerText = id;
-        div.onclick = () => toggleSticker(id, div, title);
+        div.onclick = () => toggleSticker(id, div, teamCode);
         grid.appendChild(div);
     });
     container.appendChild(section);
-    updateSectionCount(title);
+    updateSectionCount(teamCode);
 }
 
-function toggleSticker(id, element, teamTitle) {
+function toggleSticker(id, element, teamCode) {
     if (collection[id]) {
         delete collection[id];
         element.classList.remove('obtained');
@@ -77,19 +93,18 @@ function toggleSticker(id, element, teamTitle) {
         element.classList.add('obtained');
     }
     updateProgress();
-    updateSectionCount(teamTitle);
+    updateSectionCount(teamCode);
     saveToLocal();
 }
 
-function updateSectionCount(teamTitle) {
+function updateSectionCount(teamCode) {
     const sectionStickers = Array.from(document.querySelectorAll('.sticker'))
         .filter(s => {
-            if (teamTitle === "Especiales") return s.innerText === "00";
-            // Filtro exacto para evitar que 'MEX' cuente en 'MEXICO' etc.
-            return s.innerText.startsWith(teamTitle);
+            if (teamCode === "ESPECIALES") return s.innerText === "00";
+            return s.innerText.startsWith(teamCode);
         });
     const obtained = sectionStickers.filter(s => s.classList.contains('obtained')).length;
-    const counter = document.getElementById(`count-${teamTitle}`);
+    const counter = document.getElementById(`count-${teamCode}`);
     if(counter) counter.innerText = `${obtained}/${sectionStickers.length}`;
 }
 

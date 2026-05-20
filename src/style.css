@@ -1,44 +1,55 @@
 :root {
-    --primary-green: #15803d; /* Verde de la planilla [cite: 42] */
-    --secondary-blue: #1d4ed8;
-    --accent-red: #b91c1c;
-    --bg-light: #f0fdf4;
-    --text-dark: #1f2937;
+    --bg-dark: #0b0f19;         /* Negro azulado profundo de fondo para descansar la vista */
+    --panel-dark: #1e293b;      /* Gris oscuro azulado para las tarjetas de los equipos */
+    --primary-blue: #0284c7;    /* Azul vibrante para encabezado, footer y casillas obtenidas */
+    --accent-gold: #f59e0b;    /* Dorado elegante para los títulos y progreso */
+    --text-white: #f8fafc;     /* Blanco limpio para lectura de etiquetas y números */
+    --text-muted: #94a3b8;     /* Gris claro para las casillas vacías */
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-light);
-    color: var(--text-dark);
+    background-color: var(--bg-dark);
+    color: var(--text-white);
     margin: 0;
-    padding-bottom: 80px; /* Espacio para el footer fijo */
+    padding-bottom: 80px; /* Espacio libre para no tapar contenido con el footer */
+    -webkit-tap-highlight-color: transparent; /* Elimina parpadeo molesto en móviles */
 }
 
 header {
-    background-color: var(--primary-green);
-    color: white;
-    padding: 1rem;
+    background-color: var(--primary-blue);
+    color: var(--accent-gold);
+    padding: 15px;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 800;
 }
 
 .progress-container {
-    background: rgba(255,255,255,0.2);
+    background: rgba(0, 0, 0, 0.4);
     border-radius: 10px;
-    height: 20px;
+    height: 22px;
     margin-top: 10px;
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(245, 158, 11, 0.3); /* Borde dorado sutil */
 }
 
 #progress-bar {
-    background: #4ade80;
+    background: linear-gradient(90deg, var(--accent-gold), #fcd34d); /* Degradado dorado */
     height: 100%;
     width: 0%;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #progress-text {
@@ -46,76 +57,93 @@ header {
     width: 100%;
     left: 0;
     top: 0;
-    font-size: 0.8rem;
-    line-height: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    line-height: 22px;
+    color: var(--text-white);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8); /* Asegura legibilidad sobre el dorado */
 }
 
 .team-section {
-    background: white;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: var(--panel-dark);
+    margin: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 .team-title {
-    color: var(--primary-green);
-    border-bottom: 2px solid var(--primary-green);
-    margin-bottom: 10px;
-    font-size: 1.1rem;
+    color: var(--text-white);
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    font-size: 1rem;
     display: flex;
     justify-content: space-between;
+    letter-spacing: 0.5px;
+}
+
+.team-title small {
+    color: var(--accent-gold); /* El contador parcial de cada país resalta en dorado */
 }
 
 .sticker-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+    gap: 6px;
 }
 
 .sticker {
     aspect-ratio: 1/1;
-    border: 1px solid #ddd;
+    border: 1px solid rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.7rem;
     font-weight: bold;
-    border-radius: 4px;
-    background: white;
-    color: #666;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.2);
+    color: var(--text-muted);
     cursor: pointer;
     user-select: none;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
+/* Casilla seleccionada: se pinta con el tono azul */
 .sticker.obtained {
-    background-color: var(--secondary-blue);
-    color: white;
-    border-color: var(--secondary-blue);
+    background-color: var(--primary-blue);
+    color: var(--text-white);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 8px rgba(2, 132, 199, 0.5);
+    transform: scale(0.95); /* Efecto táctil de hundimiento */
 }
 
-/* Estilo para láminas especiales */
+/* Estilo premium para láminas especiales (00 y Coca-Cola) */
 .sticker.special {
-    border: 2px solid #eab308;
-    color: #854d0e;
+    border: 1px dashed var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.sticker.special.obtained {
+    background: linear-gradient(135deg, var(--primary-blue), #0369a1);
+    border: 1.5px solid var(--accent-gold); /* Mantiene el borde de edición especial */
+    color: var(--text-white);
 }
 
 footer {
     position: fixed;
     bottom: 0;
     width: 100%;
-    background: white;
-    padding: 10px;
+    background-color: var(--primary-blue);
+    color: var(--accent-gold);
+    padding: 12px 0;
     text-align: center;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-}
-
-#btn-save {
-    background: var(--accent-red);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-weight: bold;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 100;
 }
