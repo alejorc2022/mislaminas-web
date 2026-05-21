@@ -3,9 +3,9 @@
   "name": "Mis Laminas App",
   "icons": [
     {
-      "src": "https://iili.io/C9G1zv4.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/5323/5323984.png",
       "type": "image/png",
-      "sizes": "647x512",
+      "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],
