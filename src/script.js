@@ -61,6 +61,7 @@ function initAlbum() {
 function createSection(displayTitle, stickers, teamCode) {
     const section = document.createElement('section');
     section.className = 'team-section';
+    section.id = `sec-${teamCode.toUpperCase()}`; // <--- AGREGA ESTA LÍNEA Clave para el desplazamiento por voz
     section.innerHTML = `
         <div class="team-title">
             <span>${displayTitle}</span>
@@ -236,3 +237,95 @@ document.getElementById('btn-nav-izq').onclick = function() {
         mostrarNotificacionTactica("Para instalar: toca compartir (⚙️ o ⎋) y selecciona 'Añadir a pantalla de inicio' 📱");
     }
 };
+
+// Asignar la función de voz al botón central
+document.getElementById('btn-nav-centro').onclick = iniciarBusquedaPorVoz;
+
+function iniciarBusquedaPorVoz() {
+    // Verificar compatibilidad del navegador móvil (Chrome, Safari, Edge)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        mostrarNotificacionTactica("Tu navegador no soporta búsqueda por voz. ¡Prueba en Chrome o Safari! 🎙️❌");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-ES'; // Configuración estricta en español
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    // Cambiar visualmente el botón mientras está escuchando
+    const btnCentro = document.getElementById('btn-nav-centro');
+    const textoOriginal = btnCentro.innerText;
+    btnCentro.innerText = "🎤 ESCUCHANDO...";
+    btnCentro.style.color = "#f8fafc"; // Iluminar en blanco
+
+    recognition.start();
+
+    // Cuando el celular procesa la voz con éxito
+    recognition.onresult = (event) => {
+        let voz = event.results[0][0].transcript.toLowerCase().trim();
+        // Quitar puntos finales que a veces añade el dictado del teclado
+        if(voz.endsWith('.')) voz = voz.slice(0, -1);
+        
+        mostrarNotificacionTactica(`Buscando: "${voz.toUpperCase()}"🔍`);
+        scrollHaciaSeccion(voz);
+    };
+
+    // Restaurar el botón al terminar (ya sea por éxito o error)
+    recognition.onend = () => {
+        btnCentro.innerText = textoOriginal;
+        btnCentro.style.color = "var(--accent-gold)";
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Error de voz: ", event.error);
+        mostrarNotificacionTactica("No te escuché bien, intenta de nuevo 🎙️");
+    };
+}
+
+// Lógica de emparejamiento inteligente para hacer el Scroll Automático
+function scrollHaciaSeccion(terminoVoz) {
+    let codigoEncontrado = null;
+
+    // 1. Comprobar categorías directas
+    if (terminoVoz.includes("especial") || terminoVoz.includes("esenciales") || terminoVoz === "00") {
+        codigoEncontrado = "ESPECIALES";
+    } else if (terminoVoz.includes("coca") || terminoVoz.includes("cola") || terminoVoz === "cc") {
+        codigoEncontrado = "CC";
+    } else if (terminoVoz === "fwc" || terminoVoz.includes("fútbol world") || terminoVoz.includes("fifa")) {
+        codigoEncontrado = "FWC";
+    } else {
+        // 2. Buscar por abreviatura exacta (ej: si dices "m-e-x" o "c-o-l")
+        const abreviaturaDirecta = terminoVoz.toUpperCase();
+        if (TEAMS.includes(abreviaturaDirecta)) {
+            codigoEncontrado = abreviaturaDirecta;
+        } else {
+            // 3. Buscar por el nombre en español dentro de nuestro diccionario de países
+            for (const [codigo, nombrePais] of Object.entries(TEAM_NAMES)) {
+                if (nombrePais.toLowerCase().includes(terminoVoz) || terminoVoz.includes(nombrePais.toLowerCase())) {
+                    codigoEncontrado = codigo;
+                    break;
+                }
+            }
+        }
+    }
+
+    // 4. Ejecutar el desplazamiento suave (Scroll) si se halló la sección
+    if (codigoEncontrado) {
+        const elementoSeccion = document.getElementById(`sec-${codigoEncontrado}`);
+        if (elementoSeccion) {
+            // Desplazamiento nativo super fluido optimizado para celular
+            elementoSeccion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Destello visual temporal para avisar al usuario dónde quedó ubicado
+            elementoSeccion.style.boxShadow = "0 0 20px var(--primary-blue)";
+            setTimeout(() => {
+                elementoSeccion.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
+            }, 1500);
+        }
+    } else {
+        mostrarNotificacionTactica(`No encontré la sección: "${terminoVoz.toUpperCase()}" 📋❌`);
+    }
+}
