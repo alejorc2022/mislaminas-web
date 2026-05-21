@@ -132,18 +132,73 @@ header h1 {
     color: var(--text-white);
 }
 
-footer {
+/* Barra de navegación inferior optimizada para móviles */
+.bottom-nav {
     position: fixed;
     bottom: 0;
+    left: 0;
     width: 100%;
     background-color: var(--primary-blue);
-    color: var(--accent-gold);
-    padding: 12px 0;
-    text-align: center;
+    display: table; /* Distribución perfecta y sólida para WeasyPrint/móviles */
+    table-layout: fixed;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+/* Estilo individual para los 3 botones */
+.nav-btn {
+    display: table-cell;
+    width: 33.333%;
+    height: 55px; /* Altura ideal recomendada para interfaces táctiles */
+    background: transparent;
+    border: none;
+    color: var(--accent-gold);
+    font-size: 0.85rem;
     font-weight: 800;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
     text-transform: uppercase;
-    z-index: 100;
+    text-align: center;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Efecto visual premium cuando mantienes presionado el botón en el celular */
+.nav-btn:active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+}
+
+/* Pequeña línea divisoria estética entre los botones */
+.nav-btn:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Notificación flotante móvil premium */
+#aviso-flotante {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--panel-dark);
+    color: var(--text-white);
+    border: 1.5px solid var(--accent-gold);
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    pointer-events: none;
+    width: 80%;
+    max-width: 320px;
+    animation: slideDownNav 0.3s ease-out;
+    transition: opacity 0.4s ease;
+}
+
+@keyframes slideDownNav {
+    from { top: -50px; opacity: 0; }
+    to { top: 20px; opacity: 1; }
 }
