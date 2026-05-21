@@ -199,3 +199,40 @@ function mostrarNotificacionTactica(mensaje) {
         setTimeout(() => aviso.remove(), 400);
     }, 2500);
 }
+
+// Variable global para almacenar el evento de instalación nativo
+let eventoInstalacion = null;
+
+// Escuchar cuando el navegador detecte que la Web App está lista para ser instalada
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Evita que el navegador muestre su propio banner automático molesto
+    e.preventDefault();
+    // Guarda el evento para usarlo cuando el usuario toque el botón "INSTALAR APP"
+    eventoInstalacion = e;
+    
+    // Opcional: Iluminar o hacer parpadear sutilmente el botón para avisar que ya se puede instalar
+    const btnInstalar = document.getElementById('btn-nav-izq');
+    if(btnInstalar) {
+        btnInstalar.style.color = '#ffffff'; // Cambia a blanco nítido para resaltar
+    }
+});
+
+// Asignar la función al pulsar el botón izquierdo del footer
+document.getElementById('btn-nav-izq').onclick = function() {
+    // Si el evento ya fue capturado y está listo
+    if (eventoInstalacion) {
+        eventoInstalacion.prompt(); // Abre la ventana nativa de confirmación del celular
+        
+        eventoInstalacion.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                mostrarNotificacionTactica("¡Instalando Mis Laminas App...! 🎉");
+            } else {
+                console.log('El usuario canceló la instalación');
+            }
+            eventoInstalacion = null; // Limpiar la variable
+        });
+    } else {
+        // Explicación amigable por si el celular no soporta la API nativa de instalación por botón (ej. algunos iPhones)
+        mostrarNotificacionTactica("Para instalar: toca compartir (⚙️ o ⎋) y selecciona 'Añadir a pantalla de inicio' 📱");
+    }
+};
