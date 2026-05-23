@@ -21,11 +21,32 @@
     <main id="album-container">
         </main>
 
-    <footer class="bottom-nav">
-        <button id="btn-nav-izq" class="nav-btn">INSTALAR APP</button>
-        <button id="btn-nav-centro" class="nav-btn">BUSCAR POR VOZ</button>
-        <button id="btn-nav-der" class="nav-btn">EXP FALTANTES</button>
-   </footer>
+   <footer class="bottom-nav">
+        <button id="btn-nav-izq" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18L5.33 11h4V16h5.34v-5h4L12 2z"/></svg>
+            <span class="nav-label">Instalar</span>
+        </button>
+
+        <div class="nav-item disabled">
+            <svg class="nav-icon text-muted" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <span class="nav-label"></span>
+        </div>
+
+        <button id="btn-nav-centro" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+            <span class="nav-label">Voz</span>
+        </button>
+
+        <div class="nav-item disabled">
+            <svg class="nav-icon text-muted" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"/></svg>
+            <span class="nav-label"></span>
+        </div>
+
+        <button id="btn-nav-der" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+            <span class="nav-label">Compartir</span>
+        </button>
+    </footer>
 
     <script src="script.js"></script>
 </body>
