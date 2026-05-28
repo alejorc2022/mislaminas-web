@@ -196,7 +196,9 @@ if (btnCompartir) {
                 mostrarNotificacionTactica("¡Lista de faltantes copiada al portapapeles! 📋");
             }).catch(err => {
                 console.error("Error al copiar: ", err);
-                alert("No se pudo copiar automáticamente. Intenta de nuevo.");
+                mostrarNotificacionTactica("No se pudo copiar automáticamente. Intenta de nuevo.");
+                
+                
             });
         }
 
@@ -272,7 +274,8 @@ if (btnPrincipal) {
 const btnRepetidas = document.getElementById('btn-nav-repetidas');
 if (btnRepetidas) {
     btnRepetidas.addEventListener('click', () => {
-        alert("Módulo de láminas 'Repetidas' en desarrollo. ¡Próximamente!");
+        mostrarNotificacionTactica("Módulo de láminas 'Repetidas' en desarrollo. ¡Próximamente!");
+        
     });
 }
 
@@ -304,7 +307,8 @@ if (btnMenuInstalar) {
             deferredPrompt = null;
             cerrarMenu(); // Cierra el menú automáticamente tras pulsar
         } else {
-            alert('La app ya está instalada o tu navegador no soporta la instalación automática de la App.');
+            mostrarNotificacionTactica("La app ya está instalada o tu navegador no soporta la instalación automática de la App.");
+           
         }
     });
 }
