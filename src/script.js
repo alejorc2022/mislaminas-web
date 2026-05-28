@@ -138,9 +138,7 @@ function saveToLocal() {
 
 initAlbum();
 
-// Oyentes de eventos para las futuras funciones de tus botones
-document.getElementById('btn-nav-izq').onclick = () => alert('¡Próximamente: Función Izquierda!');
-document.getElementById('btn-nav-centro').onclick = () => alert('¡Próximamente: Función Central!');
+
 
 // --- CONTROL DE LA BARRA DE NAVEGACIÓN INFERIOR ---
 
@@ -260,42 +258,58 @@ function mostrarNotificacionTactica(mensaje) {
     }, 2500);
 }
 
-// Variable global para almacenar el evento de instalación nativo
-let eventoInstalacion = null;
+// --- CONTROL DE NUEVAS FUNCIONALIDADES DEL FOOTER ---
 
-// Escuchar cuando el navegador detecte que la Web App está lista para ser instalada
+// Botón Principal (Volver al inicio del álbum)
+const btnPrincipal = document.getElementById('btn-nav-principal');
+if (btnPrincipal) {
+    btnPrincipal.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Hace scroll suave hacia arriba
+    });
+}
+
+// Botón Repetidas (Estructura lista para el futuro desarrollo)
+const btnRepetidas = document.getElementById('btn-nav-repetidas');
+if (btnRepetidas) {
+    btnRepetidas.addEventListener('click', () => {
+        alert("Módulo de láminas 'Repetidas' en desarrollo. ¡Próximamente!");
+    });
+}
+
+
+// --- TRASLADO DE LOGICA DE INSTALACIÓN AL MENÚ DESPLEGABLE ---
+
+let deferredPrompt;
+const btnMenuInstalar = document.getElementById('btn-menu-instalar');
+
+// Captura el evento de instalación del navegador
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Evita que el navegador muestre su propio banner automático molesto
     e.preventDefault();
-    // Guarda el evento para usarlo cuando el usuario toque el botón "INSTALAR APP"
-    eventoInstalacion = e;
-    
-    // Opcional: Iluminar o hacer parpadear sutilmente el botón para avisar que ya se puede instalar
-    const btnInstalar = document.getElementById('btn-nav-izq');
-    if(btnInstalar) {
-        btnInstalar.style.color = '#ffffff'; // Cambia a blanco nítido para resaltar
+    deferredPrompt = e;
+    // Si el navegador detecta que es instalable, podemos dar un estilo especial al botón del menú si se desea
+    if (btnMenuInstalar) {
+        btnMenuInstalar.style.opacity = "1";
     }
 });
 
-// Asignar la función al pulsar el botón izquierdo del footer
-document.getElementById('btn-nav-izq').onclick = function() {
-    // Si el evento ya fue capturado y está listo
-    if (eventoInstalacion) {
-        eventoInstalacion.prompt(); // Abre la ventana nativa de confirmación del celular
-        
-        eventoInstalacion.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                mostrarNotificacionTactica("¡Instalando Mis Laminas App...! 🎉");
-            } else {
-                console.log('El usuario canceló la instalación');
+// Acción de instalar al pulsar la opción dentro del menú desplegable
+if (btnMenuInstalar) {
+    btnMenuInstalar.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('El usuario instaló Mis Laminas App');
             }
-            eventoInstalacion = null; // Limpiar la variable
-        });
-    } else {
-        // Explicación amigable por si el celular no soporta la API nativa de instalación por botón (ej. algunos iPhones)
-        mostrarNotificacionTactica("Para instalar: toca compartir (⚙️ o ⎋) y selecciona 'Añadir a pantalla de inicio' 📱");
-    }
-};
+            deferredPrompt = null;
+            cerrarMenu(); // Cierra el menú automáticamente tras pulsar
+        } else {
+            alert('La app ya está instalada o tu navegador no soporta la instalación automática de la App.');
+        }
+    });
+}
+
+
 
 // Asignar la función de voz al botón central
 document.getElementById('btn-nav-centro').onclick = iniciarBusquedaPorVoz;

@@ -362,3 +362,9 @@ header h1 {
     fill: #ffffff; /* Iconos internos en blanco */
 }
 
+/* Clase global para opciones deshabilitadas dentro de menús */
+.menu-option-btn.disabled {
+    cursor: default;
+    background: transparent !important;
+}
+
