@@ -13,7 +13,7 @@ const TEAMS = [
 // Diccionario de traducciones al español para cada abreviatura 
 const TEAM_NAMES = {
     "MEX": "MÉXICO", "RSA": "SUDÁFRICA", "KOR": "COREA DEL SUR", "CZE": "REPÚBLICA CHECA",
-    "CAN": "CANADÁ", "BIH": "BOSNIA Y HERZEGOVINA", "QAT": "CATAR", "SUI": "SUIZA",
+    "CAN": "CANADÁ", "BIH": "BOSNIA Y HERZEGOVINA", "QAT": "QATAR", "SUI": "SUIZA",
     "BRA": "BRASIL", "MAR": "MARRUECOS", "HAI": "HAITÍ", "SCO": "ESCOCIA",
     "USA": "ESTADOS UNIDOS", "PAR": "PARAGUAY", "AUS": "AUSTRALIA", "TUR": "TURQUÍA",
     "GER": "ALEMANIA", "CUW": "CURAZAO", "CIV": "COSTA DE MARFIL", "ECU": "ECUADOR",
@@ -314,53 +314,59 @@ if (btnMenuInstalar) {
 }
 
 
+// --- CONTROL DE BÚSQUEDA POR VOZ OPTIMIZADO ---
+const btnVoz = document.getElementById('btn-nav-centro');
 
-// Asignar la función de voz al botón central
-document.getElementById('btn-nav-centro').onclick = iniciarBusquedaPorVoz;
-
-function iniciarBusquedaPorVoz() {
-    // Verificar compatibilidad del navegador móvil (Chrome, Safari, Edge)
+if (btnVoz && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-        mostrarNotificacionTactica("Tu navegador no soporta búsqueda por voz. ¡Prueba en Chrome o Safari! 🎙️❌");
-        return;
-    }
-
     const recognition = new SpeechRecognition();
-    recognition.lang = 'es-ES'; // Configuración estricta en español
+
+    recognition.lang = 'es-419'; // Español Latinoamericano
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    // Cambiar visualmente el botón mientras está escuchando
-    const btnCentro = document.getElementById('btn-nav-centro');
-    const textoOriginal = btnCentro.innerText;
-    btnCentro.innerText = "🎤 ESCUCHANDO...";
-    btnCentro.style.color = "#f8fafc"; // Iluminar en blanco
+    // Al hacer clic en el botón central de la barra
+    btnVoz.addEventListener('click', () => {
+        // Si ya está escuchando (tiene la clase), lo detenemos, si no, iniciamos
+        if (btnVoz.classList.contains('escuchando')) {
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (error) {
+                console.log("El reconocimiento ya estaba activo o iniciando.");
+            }
+        }
+    });
 
-    recognition.start();
+    // 1. Cuando empieza a escuchar: SOLO añadimos la clase visual
+    recognition.onstart = () => {
+        btnVoz.classList.add('escuchando');
+    };
 
-    // Cuando el celular procesa la voz con éxito
+    // 2. Cuando termina con éxito (procesa el texto)
     recognition.onresult = (event) => {
-        let voz = event.results[0][0].transcript.toLowerCase().trim();
-        // Quitar puntos finales que a veces añade el dictado del teclado
-        if(voz.endsWith('.')) voz = voz.slice(0, -1);
+        const resultadoTexto = event.results[0][0].transcript.toLowerCase();
+        console.log("Texto escuchado:", resultadoTexto);
         
-        mostrarNotificacionTactica(`Buscando: "${voz.toUpperCase()}"🔍`);
-        scrollHaciaSeccion(voz);
+        // Aquí se ejecuta tu lógica existente para buscar el equipo...
+        if (typeof procesarBusquedaPorVoz === 'function') {
+            procesarBusquedaPorVoz(resultadoTexto);
+        }
     };
 
-    // Restaurar el botón al terminar (ya sea por éxito o error)
+    // 3. Cuando se detiene la escucha (por éxito, silencio o clic): quitamos la clase
     recognition.onend = () => {
-        btnCentro.innerText = textoOriginal;
-        btnCentro.style.color = "var(--accent-gold)";
+        btnVoz.classList.remove('escuchando');
     };
 
+    // 4. Si ocurre un error: limpiamos el estado visual
     recognition.onerror = (event) => {
-        console.error("Error de voz: ", event.error);
-        mostrarNotificacionTactica("No te escuché bien, intenta de nuevo 🎙️");
+        console.error("Error en reconocimiento de voz:", event.error);
+        btnVoz.classList.remove('escuchando');
     };
 }
+
 
 // Lógica de emparejamiento inteligente para hacer el Scroll Automático
 function scrollHaciaSeccion(terminoVoz) {

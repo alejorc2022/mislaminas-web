@@ -368,3 +368,23 @@ header h1 {
     background: transparent !important;
 }
 
+/* Estado activo cuando el dispositivo móvil está escuchando la voz del usuario */
+.nav-item.escuchando, .nav-btn.escuchando {
+    background-color: rgba(239, 68, 68, 0.2) !important; /* Fondo rojo translúcido sutil de grabación */
+    color: #ef4444 !important; /* Cambia el texto e icono a rojo vibrante */
+    box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.4);
+    animation: pulsoGrabacion 1.5s infinite ease-in-out;
+}
+
+/* El truco del "fill: currentColor" asegura que el SVG herede el color rojo automáticamente */
+.nav-item.escuchando svg, .nav-btn.escuchando svg {
+    fill: #ef4444 !important;
+}
+
+/* Animación opcional para que el botón parpadee suavemente mientras escucha */
+@keyframes pulsoGrabacion {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
