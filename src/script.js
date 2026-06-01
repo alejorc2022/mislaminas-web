@@ -314,56 +314,52 @@ if (btnMenuInstalar) {
 }
 
 
-// --- CONTROL DE BÚSQUEDA POR VOZ OPTIMIZADO ---
-const btnVoz = document.getElementById('btn-nav-centro');
+// Asignar la función de voz al botón central
+document.getElementById('btn-nav-centro').onclick = iniciarBusquedaPorVoz;
 
-if (btnVoz && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+function iniciarBusquedaPorVoz() {
+    // Verificar compatibilidad del navegador móvil (Chrome, Safari, Edge)
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    
+    if (!SpeechRecognition) {
+        mostrarNotificacionTactica("Tu navegador no soporta búsqueda por voz. ¡Prueba en Chrome o Safari! 🎙️❌");
+        return;
+    }
 
-    recognition.lang = 'es-419'; // Español Latinoamericano
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-ES'; // Configuración estricta en español
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    // Al hacer clic en el botón central de la barra
-    btnVoz.addEventListener('click', () => {
-        // Si ya está escuchando (tiene la clase), lo detenemos, si no, iniciamos
-        if (btnVoz.classList.contains('escuchando')) {
-            recognition.stop();
-        } else {
-            try {
-                recognition.start();
-            } catch (error) {
-                console.log("El reconocimiento ya estaba activo o iniciando.");
-            }
-        }
-    });
+    const btnCentro = document.getElementById('btn-nav-centro');
 
     // 1. Cuando empieza a escuchar: SOLO añadimos la clase visual
     recognition.onstart = () => {
-        btnVoz.classList.add('escuchando');
+        btnCentro.classList.add('escuchando');
     };
 
-    // 2. Cuando termina con éxito (procesa el texto)
+    recognition.start();
+
+    // 2. Cuando el celular procesa la voz con éxito
     recognition.onresult = (event) => {
-        const resultadoTexto = event.results[0][0].transcript.toLowerCase();
-        console.log("Texto escuchado:", resultadoTexto);
+        let voz = event.results[0][0].transcript.toLowerCase().trim();
+        // Quitar puntos finales que a veces añade el dictado del teclado
+        if(voz.endsWith('.')) voz = voz.slice(0, -1);
         
-        // Aquí se ejecuta tu lógica existente para buscar el equipo...
-        if (typeof procesarBusquedaPorVoz === 'function') {
-            procesarBusquedaPorVoz(resultadoTexto);
-        }
+        mostrarNotificacionTactica(`Buscando: "${voz.toUpperCase()}"🔍`);
+        scrollHaciaSeccion(voz);
     };
 
-    // 3. Cuando se detiene la escucha (por éxito, silencio o clic): quitamos la clase
+    // 3. Cuando se detiene la escucha (por éxito o silencio): quitamos la clase
     recognition.onend = () => {
-        btnVoz.classList.remove('escuchando');
+        btnCentro.classList.remove('escuchando');
     };
 
     // 4. Si ocurre un error: limpiamos el estado visual
     recognition.onerror = (event) => {
-        console.error("Error en reconocimiento de voz:", event.error);
-        btnVoz.classList.remove('escuchando');
+        console.error("Error de voz: ", event.error);
+        mostrarNotificacionTactica("No te escuché bien, intenta de nuevo 🎙️");
+        btnCentro.classList.remove('escuchando');
     };
 }
 
