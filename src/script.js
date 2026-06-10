@@ -112,23 +112,21 @@ function updateSectionCount(teamCode) {
 function updateProgress() {
     // Contamos las láminas obtenidas (las que están en true dentro del objeto collection)
     const obtenidas = Object.values(collection).filter(status => status === true).length;
+    // CAMBIO: Usamos Math.round() para eliminar por completo los decimales
+    const porcentaje = Math.round((obtenidas / TOTAL_LAMINAS) * 100);
     
-    // Calculamos el porcentaje exacto con un decimal
-    const porcentaje = ((obtenidas / TOTAL_LAMINAS) * 100).toFixed(1);
-    
-    // Calculamos de forma dinámica cuántas faltan por llenar
-    const faltantes = TOTAL_LAMINAS - obtenidas;
+    const faltan = TOTAL_LAMINAS - obtenidas;
 
-    // Actualizamos el ancho visual de la barra de progreso
+    // Actualiza el ancho visual de la barra de progreso
     const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
         progressBar.style.width = `${porcentaje}%`;
     }
 
-    // Actualizamos el texto combinando tus valores antiguos con el nuevo indicador solicitado
+    // Actualiza el texto del encabezado con el formato limpio sin decimales
     const progressText = document.getElementById('progress-text');
     if (progressText) {
-        progressText.innerText = `${obtenidas} / ${TOTAL_LAMINAS} (${porcentaje}%) FALTAN ${faltantes}`;
+        progressText.innerText = `${obtenidas} / ${TOTAL_LAMINAS} (${porcentaje}%) FALTAN ${faltan}`;
     }
 }
 
