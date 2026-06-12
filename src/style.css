@@ -55,9 +55,9 @@ header h1 {
 /* Contenedor de progreso optimizado para el espacio restante */
 .progress-container {
     flex-grow: 1; /* Hace que la barra ocupe todo el ancho disponible */
-    background-color: rgba(255, 255, 255, 0.15); /* Fondo sutil para el modo oscuro */
+    background-color: rgba(255, 255, 255, 0.15); /* Mantenemos tu fondo original */
     border-radius: 6px;
-    height: 24px; /* Altura compacta ideal */
+    height: 32px; /* <-- CAMBIO: Altura ampliada de 24px a 32px para alojar la nueva fuente */
     position: relative;
     overflow: hidden;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -67,7 +67,7 @@ header h1 {
 #progress-bar {
     height: 100%;
     width: 0%;
-    background-color: var(--accent-gold);
+    background-color: var(--accent-gold); /* Mantenemos tu dorado original */
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -80,9 +80,9 @@ header h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     color: var(--text-white);
-    font-size: 0.75rem;
+    font-size: 1.1rem; /* <-- CAMBIO: Aumentado de 0.75rem a 1.1rem (Exactamente igual a .app-title) */
     font-weight: 700;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para que se lea perfectamente sobre el dorado o el azul */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Mantenemos la sombra para contraste */
     pointer-events: none; /* Evita interferencias con el tacto */
 }
 
@@ -427,4 +427,5 @@ header h1 {
     height: 22px;
     fill: var(--text-white);
 }
+
 
