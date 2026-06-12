@@ -173,6 +173,8 @@ header h1 {
     padding-bottom: env(safe-area-inset-bottom); /* Compatible con gestos de iPhones/Android modernos */
 }
 
+
+
 /* Estilo individual para cada botón táctil */
 .nav-item {
     background: transparent;
@@ -429,6 +431,13 @@ header h1 {
     width: 22px;
     height: 22px;
     fill: var(--text-white);
+}
+
+/* Agrupa y alinea de forma ordenada los iconos del lado derecho superior */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Pequeño espacio uniforme entre compartir y menú */
 }
 
 
