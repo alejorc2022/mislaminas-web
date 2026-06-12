@@ -111,23 +111,26 @@ header h1 {
     color: var(--accent-gold); /* El contador parcial de cada país resalta en dorado */
 }
 
+/* Contenedor de la cuadrícula de láminas */
 .sticker-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
-    gap: 6px;
+    /* <-- CAMBIO: Aumentado el tamaño mínimo de 46px a 65px para hacer las casillas más grandes y legibles */
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); 
+    gap: 8px; /* Ligeramente aumentado de 6px a 8px para que respiren mejor por el nuevo tamaño */
 }
 
+/* Estilo individual de cada casilla/lámina */
 .sticker {
     aspect-ratio: 1/1;
     border: 1px solid rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 1rem; /* <-- CAMBIO: Aumentado de 0.7rem a 1rem (Mismo tamaño que el .team-title) */
     font-weight: bold;
     border-radius: 6px;
-    background: rgba(0,0,0,0.2);
-    color: var(--text-muted);
+    background: rgba(0,0,0,0.2); /* Mantenemos tus colores intactos */
+    color: var(--text-muted);    /* Mantenemos tus colores intactos */
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;

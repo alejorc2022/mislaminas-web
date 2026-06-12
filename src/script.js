@@ -12,8 +12,8 @@ const TEAMS = [
 
 // Diccionario de traducciones al español para cada abreviatura 
 const TEAM_NAMES = {
-    "MEX": "MÉXICO", "RSA": "SUDÁFRICA", "KOR": "COREA DEL SUR", "CZE": "REPÚBLICA CHECA",
-    "CAN": "CANADÁ", "BIH": "BOSNIA Y HERZEGOVINA", "QAT": "QATAR", "SUI": "SUIZA",
+    "MEX": "MÉXICO", "RSA": "SUDÁFRICA", "KOR": "COREA DEL SUR", "CZE": "REPÚBLICA CHECA - CHEQUIA",
+    "CAN": "CANADÁ", "BIH": "BOSNIA Y HERZEGOVINA", "QAT": "QATAR - CATAR", "SUI": "SUIZA",
     "BRA": "BRASIL", "MAR": "MARRUECOS", "HAI": "HAITÍ", "SCO": "ESCOCIA",
     "USA": "ESTADOS UNIDOS", "PAR": "PARAGUAY", "AUS": "AUSTRALIA", "TUR": "TURQUÍA",
     "GER": "ALEMANIA", "CUW": "CURAZAO", "CIV": "COSTA DE MARFIL", "ECU": "ECUADOR",
@@ -23,7 +23,7 @@ const TEAM_NAMES = {
     "FRA": "FRANCIA", "SEN": "SENEGAL", "IRQ": "IRAK", "NOR": "NORUEGA",
     "ARG": "ARGENTINA", "ALG": "ARGELIA", "AUT": "AUSTRIA", "JOR": "JORDANIA",
     "POR": "PORTUGAL", "COD": "REP. DEM. DEL CONGO", "UZB": "UZBEKISTÁN", "COL": "COLOMBIA",
-    "ENG": "INGLATERRA", "CRO": "CROACIA", "GHA": "GHANA", "PAN": "PANAMÁ"
+    "ENG": "INGLATERRA", "CRO": "CROACIA", "GHA": "GHANA - GANA", "PAN": "PANAMÁ"
 };
 
 let collection = JSON.parse(localStorage.getItem('mundial2026_data')) || {};
