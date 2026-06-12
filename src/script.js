@@ -112,6 +112,7 @@ function updateSectionCount(teamCode) {
 function updateProgress() {
     // Contamos las láminas obtenidas (las que están en true dentro del objeto collection)
     const obtenidas = Object.values(collection).filter(status => status === true).length;
+    
     // CAMBIO: Usamos Math.round() para eliminar por completo los decimales
     const porcentaje = Math.round((obtenidas / TOTAL_LAMINAS) * 100);
     
@@ -141,7 +142,7 @@ initAlbum();
 // --- CONTROL DE LA BARRA DE NAVEGACIÓN INFERIOR ---
 
 // 1. Vincular la función de compartir que ya tenías al nuevo botón de la posición 4
-const btnCompartir = document.getElementById('btn-nav-compartir');
+const btnCompartir = document.getElementById('btn-header-compartir');
 if (btnCompartir) {
     // Aquí mapeas la función exacta que tenías programada para exportar
     function exportarFaltantes() {
@@ -204,6 +205,19 @@ if (btnCompartir) {
     btnCompartir.addEventListener('click', () => {
         // Ejecuta tu función existente aquí, por ejemplo:
          exportarFaltantes();
+    });
+}
+
+// 2. Botón Intercambiar del Footer (Preparado para desarrollo futuro)
+const btnNavIntercambiar = document.getElementById('btn-nav-intercambiar');
+if (btnNavIntercambiar) {
+    btnNavIntercambiar.addEventListener('click', () => {
+        // Dejado en stand-by profesional mostrando aviso táctico en pantalla
+        if (typeof mostrarNotificacionTactica === 'function') {
+            mostrarNotificacionTactica("Función de Intercambio disponible próximamente...");
+        } else {
+            mostrarNotificacionTactica("Función de Intercambio disponible próximamente...");
+        }
     });
 }
 

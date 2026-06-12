@@ -391,3 +391,40 @@ header h1 {
     100% { opacity: 1; }
 }
 
+/* --- Distribución del Encabezado en Doble Fila --- */
+.header-row-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px; /* Separación fluida con la barra de progreso */
+}
+
+.header-row-2 {
+    width: 100%;
+}
+
+/* Botón de compartir en el encabezado */
+.header-icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Efecto activo premium al pulsar en celulares */
+.header-icon-btn:active {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.header-icon {
+    width: 22px;
+    height: 22px;
+    fill: var(--text-white);
+}
+
