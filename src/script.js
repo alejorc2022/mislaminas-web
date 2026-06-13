@@ -71,38 +71,90 @@ function createSection(displayTitle, stickers, teamCode) {
     `;
     
     const grid = section.querySelector('.sticker-grid');
+
     stickers.forEach(id => {
         const div = document.createElement('div');
-        div.className = `sticker ${collection[id] ? 'obtained' : ''}`;
+        div.className = `sticker`;
+        div.setAttribute('data-id', id); // Etiqueta invisible de seguridad para los contadores
         
         if(id === "00" || id.includes("CC")) div.classList.add('special');
         
-        div.innerText = id;
-        div.onclick = () => toggleSticker(id, div, teamCode);
+        // Cargar datos: Soporte para tu viejo formato (true) y el nuevo formato numérico (1, 2, 3...)
+        let count = collection[id] || 0;
+        if (count === true) count = 1;
+
+        if (count > 0) {
+            div.classList.add('obtained');
+            // Si hay más de 1, dibujamos la placa de repetidas (ej: +1, +2)
+            if (count > 1) {
+                div.innerHTML = `${id}<span class="repeat-badge">+${count - 1}</span>`;
+            } else {
+                div.innerHTML = id;
+            }
+        } else {
+            div.innerHTML = id;
+        }
+        
+        // Lógica táctil: Distinguir entre 1 Clic (sumar) y Doble Clic (restar)
+        let clickTimer = null;
+        div.addEventListener('click', (e) => {
+            if (clickTimer) {
+                // Si el temporizador seguía activo, significa que el usuario hizo un segundo toque rápido
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                modifySticker(id, div, teamCode, -1); // Acción del Doble Clic
+            } else {
+                // Iniciamos un pequeño temporizador de espera para ver si es un clic simple
+                clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    modifySticker(id, div, teamCode, 1); // Acción de Un Clic
+                }, 220); // 220ms es el tiempo perfecto estándar para doble tap en móviles
+            }
+        });
+
         grid.appendChild(div);
     });
     container.appendChild(section);
     updateSectionCount(teamCode);
 }
+    
 
-function toggleSticker(id, element, teamCode) {
-    if (collection[id]) {
+function modifySticker(id, element, teamCode, change) {
+    let count = collection[id] || 0;
+    if (count === true) count = 1; 
+
+    count += change;
+    if (count < 0) count = 0; 
+
+    if (count === 0) {
         delete collection[id];
         element.classList.remove('obtained');
+        element.innerHTML = id;
     } else {
-        collection[id] = true;
+        collection[id] = count;
         element.classList.add('obtained');
+        if (count > 1) {
+            element.innerHTML = `${id}<span class="repeat-badge">+${count - 1}</span>`;
+        } else {
+            element.innerHTML = id;
+        }
     }
+    
     updateProgress();
     updateSectionCount(teamCode);
     saveToLocal();
+    
+    // NUEVA LÍNEA: Refresca la vista actual inmediatamente después de cada clic
+    aplicarFiltro(modoActual); 
 }
 
 function updateSectionCount(teamCode) {
     const sectionStickers = Array.from(document.querySelectorAll('.sticker'))
         .filter(s => {
-            if (teamCode === "ESPECIALES") return s.innerText === "00";
-            return s.innerText.startsWith(teamCode);
+            // Buscamos usando el atributo seguro en lugar del innerText para que la placa +1 no lo rompa
+            const stickerId = s.getAttribute('data-id');
+            if (teamCode === "ESPECIALES") return stickerId === "00";
+            return stickerId.startsWith(teamCode);
         });
     const obtained = sectionStickers.filter(s => s.classList.contains('obtained')).length;
     const counter = document.getElementById(`count-${teamCode}`);
@@ -110,25 +162,79 @@ function updateSectionCount(teamCode) {
 }
 
 function updateProgress() {
-    // Contamos las láminas obtenidas (las que están en true dentro del objeto collection)
-    const obtenidas = Object.values(collection).filter(status => status === true).length;
+    // 1. Contamos las láminas "únicas" que tenemos
+    const obtenidas = Object.values(collection).filter(val => val === true || val >= 1).length;
     
-    // CAMBIO: Usamos Math.round() para eliminar por completo los decimales
+    // 2. NUEVO: Calculamos el total exacto de láminas repetidas en todo el álbum
+    let totalRepetidas = 0;
+    Object.values(collection).forEach(val => {
+        let count = (val === true) ? 1 : val; // Compatibilidad por si hay datos viejos
+        if (count > 1) {
+            totalRepetidas += (count - 1); // Sumamos solo las láminas extras (repetidas)
+        }
+    });
+    
+    // 3. Cálculos de porcentaje y faltantes
     const porcentaje = Math.round((obtenidas / TOTAL_LAMINAS) * 100);
-    
     const faltan = TOTAL_LAMINAS - obtenidas;
 
-    // Actualiza el ancho visual de la barra de progreso
+    // 4. Actualización visual de la barra dorada
     const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
         progressBar.style.width = `${porcentaje}%`;
     }
 
-    // Actualiza el texto del encabezado con el formato limpio sin decimales
+    // 5. Actualización del texto superior con la nueva concatenación
     const progressText = document.getElementById('progress-text');
     if (progressText) {
-        progressText.innerText = `${obtenidas} / ${TOTAL_LAMINAS} (${porcentaje}%) FALTAN ${faltan}`;
+        progressText.innerText = `${obtenidas} / ${TOTAL_LAMINAS} (${porcentaje}%) FALTAN ${faltan} REPETIDAS ${totalRepetidas}`;
     }
+}
+
+// --- MOTOR DE FILTRADO DINÁMICO (VISTAS DEL ÁLBUM) ---
+let modoActual = 'principal'; // Estado inicial de la app
+
+function aplicarFiltro(modo) {
+    modoActual = modo;
+    const secciones = document.querySelectorAll('.team-section');
+
+    secciones.forEach(seccion => {
+        let stickersVisibles = 0;
+        const stickers = seccion.querySelectorAll('.sticker');
+
+        stickers.forEach(sticker => {
+            const id = sticker.getAttribute('data-id');
+            let count = collection[id] || 0;
+            if (count === true) count = 1; // Conversión por si hay datos viejos
+
+            let mostrar = false;
+            // Lógica de visualización según el modo
+            if (modo === 'principal') mostrar = true;
+            else if (modo === 'faltantes') mostrar = (count === 0);
+            else if (modo === 'repetidas') mostrar = (count > 1);
+
+            // Aplicar visibilidad
+            if (mostrar) {
+                sticker.style.display = 'flex';
+                stickersVisibles++;
+            } else {
+                sticker.style.display = 'none';
+            }
+        });
+
+        // Ocultar la sección del país completa si no tiene láminas que mostrar en este modo
+        if (stickersVisibles === 0) {
+            seccion.style.display = 'none';
+        } else {
+            seccion.style.display = 'block';
+        }
+    });
+
+    // Actualizar el diseño visual de los botones inferiores
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => btn.classList.remove('active-tab'));
+    if (modo === 'principal') document.getElementById('btn-nav-principal')?.classList.add('active-tab');
+    if (modo === 'faltantes') document.getElementById('btn-nav-faltantes')?.classList.add('active-tab');
+    if (modo === 'repetidas') document.getElementById('btn-nav-repetidas')?.classList.add('active-tab');
 }
 
 function saveToLocal() {
@@ -272,22 +378,40 @@ function mostrarNotificacionTactica(mensaje) {
     }, 2500);
 }
 
-// --- CONTROL DE NUEVAS FUNCIONALIDADES DEL FOOTER ---
+// --- CONTROL DE NAVEGACIÓN INFERIOR (VISTAS) ---
 
-// Botón Principal (Volver al inicio del álbum)
+// Iniciar siempre iluminando el botón Principal
+document.addEventListener('DOMContentLoaded', () => {
+    aplicarFiltro('principal');
+});
+
+// Botón 1: Vista Principal (Muestra el álbum completo)
 const btnPrincipal = document.getElementById('btn-nav-principal');
 if (btnPrincipal) {
     btnPrincipal.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Hace scroll suave hacia arriba
+        aplicarFiltro('principal');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mostrarNotificacionTactica("Mostrando: Álbum Completo 📖");
     });
 }
 
-// Botón Repetidas (Estructura lista para el futuro desarrollo)
+// Botón 2: Vista Faltantes (Solo lo que no tienes)
+const btnFaltantes = document.getElementById('btn-nav-faltantes');
+if (btnFaltantes) {
+    btnFaltantes.addEventListener('click', () => {
+        aplicarFiltro('faltantes');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mostrarNotificacionTactica("Mostrando: Solo Láminas Faltantes 🔍");
+    });
+}
+
+// Botón 3: Vista Repetidas (Solo las que tienen la burbuja de +1)
 const btnRepetidas = document.getElementById('btn-nav-repetidas');
 if (btnRepetidas) {
     btnRepetidas.addEventListener('click', () => {
-        mostrarNotificacionTactica("Módulo de láminas 'Repetidas' en desarrollo. ¡Próximamente!");
-        
+        aplicarFiltro('repetidas');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mostrarNotificacionTactica("Mostrando: Tu Muro de Intercambios 🔁");
     });
 }
 

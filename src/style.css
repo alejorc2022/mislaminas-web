@@ -80,7 +80,7 @@ header h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     color: var(--text-white);
-    font-size: 1.1rem; /* <-- CAMBIO: Aumentado de 0.75rem a 1.1rem (Exactamente igual a .app-title) */
+    font-size: 0.95rem; /* <-- CAMBIO: Aumentado de 0.75rem a 1.1rem (Exactamente igual a .app-title) */
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Mantenemos la sombra para contraste */
     pointer-events: none; /* Evita interferencias con el tacto */
@@ -119,21 +119,49 @@ header h1 {
     gap: 8px; /* Ligeramente aumentado de 6px a 8px para que respiren mejor por el nuevo tamaño */
 }
 
-/* Estilo individual de cada casilla/lámina */
+/* Estilo individual de cada casilla/lámina actualizado */
 .sticker {
+    position: relative; /* ¡CLAVE! Necesario para ubicar el contador de repetidas en la esquina */
     aspect-ratio: 1/1;
     border: 1px solid rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem; /* <-- CAMBIO: Aumentado de 0.7rem a 1rem (Mismo tamaño que el .team-title) */
+    font-size: 1rem;
     font-weight: bold;
     border-radius: 6px;
-    background: rgba(0,0,0,0.2); /* Mantenemos tus colores intactos */
-    color: var(--text-muted);    /* Mantenemos tus colores intactos */
+    background: rgba(0,0,0,0.2);
+    color: var(--text-muted);
     cursor: pointer;
     user-select: none;
+    touch-action: manipulation; /* Evita que el celular haga zoom al hacer doble toque */
     transition: all 0.2s ease;
+}
+
+/* Burbuja roja de láminas repetidas en la esquina superior derecha */
+.repeat-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #ef4444; /* Rojo vibrante de alerta/notificación */
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+    border: 2px solid var(--panel-dark); /* Borde para separarla del fondo */
+    z-index: 10;
+    animation: popBadge 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popBadge {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
 }
 
 /* Casilla seleccionada: se pinta con el tono azul */
@@ -440,4 +468,14 @@ header h1 {
     gap: 8px; /* Pequeño espacio uniforme entre compartir y menú */
 }
 
+/* Estilo premium para indicar la pestaña o vista activa en el menú inferior */
+.nav-item.active-tab .nav-icon {
+    fill: var(--accent-gold) !important;
+    transform: scale(1.15); /* Crece ligeramente para resaltar */
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4)); /* Resplandor dorado */
+}
+.nav-item.active-tab .nav-label {
+    color: var(--accent-gold) !important;
+    font-weight: 800;
+}
 
