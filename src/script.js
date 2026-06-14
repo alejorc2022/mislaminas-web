@@ -244,75 +244,132 @@ function saveToLocal() {
 initAlbum();
 
 
+// --- NUEVO SISTEMA DE COMPARTIR NATIVO ---
 
-// --- CONTROL DE LA BARRA DE NAVEGACIÓN INFERIOR ---
-
-// 1. Vincular la función de compartir que ya tenías al nuevo botón de la posición 4
 const btnCompartir = document.getElementById('btn-header-compartir');
-if (btnCompartir) {
-    // Aquí mapeas la función exacta que tenías programada para exportar
-    function exportarFaltantes() {
-            let textoFaltantes = "🏆 *MIS LÁMINAS FALTANTES - COPA DEL MUNDO 2026* 🏆\n\n";
-            let tieneFaltantes = false;
+const menuCompartirOverlay = document.getElementById('menu-compartir-overlay');
+const menuCompartirDesplegable = document.getElementById('menu-compartir-desplegable');
 
-            // 1. Verificar la lámina especial 00
-            if (!collection["00"]) {
-                textoFaltantes += "*ESPECIALES:* 00\n";
-                tieneFaltantes = true;
+function abrirMenuCompartir() {
+    menuCompartirOverlay.style.display = 'block';
+    setTimeout(() => {
+        menuCompartirOverlay.classList.add('active');
+        menuCompartirDesplegable.classList.add('active');
+    }, 10);
+}
+
+function cerrarMenuCompartir() {
+    menuCompartirOverlay.classList.remove('active');
+    menuCompartirDesplegable.classList.remove('active');
+    setTimeout(() => {
+        menuCompartirOverlay.style.display = 'none';
+    }, 300);
+}
+
+// Eventos de apertura/cierre
+if (btnCompartir) btnCompartir.addEventListener('click', abrirMenuCompartir);
+if (menuCompartirOverlay) menuCompartirOverlay.addEventListener('click', cerrarMenuCompartir);
+
+// Función centralizada para generar los textos según lo que el usuario quiera compartir
+function generarTextoCompartir(tipo) {
+    let texto = "";
+
+    // BLOQUE DE FALTANTES
+    if (tipo === 'faltantes' || tipo === 'ambas') {
+        texto += "🏆 *MIS LÁMINAS FALTANTES - MUNDIAL 2026* 🏆\n\n";
+        let faltantes = false;
+        
+        if (!collection["00"]) { texto += "*ESPECIALES:* 00\n"; faltantes = true; }
+
+        TEAMS.forEach(team => {
+            let lista = [];
+            let max = (team === "FWC") ? 19 : (team === "CC" ? 14 : 20);
+            for (let i = 1; i <= max; i++) {
+                if (!collection[`${team}${i}`]) lista.push(i);
             }
-
-            // 2. Recorrer cada selección y categoría en el orden oficial
-            TEAMS.forEach(team => {
-                let faltantesEquipo = [];
-                
-                if (team === "FWC") {
-                    for (let i = 1; i <= 19; i++) {
-                        if (!collection[`FWC${i}`]) faltantesEquipo.push(i);
-                    }
-                } 
-                else if (team === "CC") {
-                    for (let i = 1; i <= 14; i++) {
-                        if (!collection[`CC${i}`]) faltantesEquipo.push(i);
-                    }
-                } 
-                else {
-                    for (let i = 1; i <= 20; i++) {
-                        if (!collection[`${team}${i}`]) faltantesEquipo.push(i);
-                    }
-                }
-
-                // Si al equipo le faltan láminas, las añadimos de forma estética
-                if (faltantesEquipo.length > 0) {
-                    tieneFaltantes = true;
-                    // Si es FWC o CC dejamos la etiqueta sola, si es país usamos su abreviatura
-                    textoFaltantes += `*${team}:* ${faltantesEquipo.join(", ")}\n`;
-                }
-            });
-
-            // Si el álbum está 100% completo
-            if (!tieneFaltantes) {
-                textoFaltantes = "¡Increíble! ¡Ya completé todo mi Álbum de la Copa del Mundo 2026! 🥳🔥";
-            } else {
-                textoFaltantes += "\n_Compartido desde la Web App Mis Láminas 2026_";
+            if (lista.length > 0) {
+                texto += `*${team}:* ${lista.join(", ")}\n`;
+                faltantes = true;
             }
+        });
+        if (!faltantes) texto += "¡Increíble! No me falta ninguna. 🥳\n";
+        texto += "\n";
+    }
 
-            // Copiar el texto resultante de forma nativa al portapapeles del dispositivo
-            navigator.clipboard.writeText(textoFaltantes).then(() => {
-                mostrarNotificacionTactica("¡Lista de faltantes copiada al portapapeles! 📋");
-            }).catch(err => {
-                console.error("Error al copiar: ", err);
-                mostrarNotificacionTactica("No se pudo copiar automáticamente. Intenta de nuevo.");
-                
-                
-            });
+    // BLOQUE DE REPETIDAS
+    if (tipo === 'repetidas' || tipo === 'ambas') {
+        texto += "🔄 *MIS LÁMINAS REPETIDAS - MUNDIAL 2026* 🔄\n\n";
+        let repetidas = false;
+        
+        let count00 = (collection["00"] === true) ? 1 : (collection["00"] || 0);
+        if (count00 > 1) { 
+            texto += `*ESPECIALES:* 00 (+${count00 - 1})\n`; 
+            repetidas = true; 
         }
 
+        TEAMS.forEach(team => {
+            let lista = [];
+            let max = (team === "FWC") ? 19 : (team === "CC" ? 14 : 20);
+            for (let i = 1; i <= max; i++) {
+                let id = `${team}${i}`;
+                let count = (collection[id] === true) ? 1 : (collection[id] || 0);
+                if (count > 1) {
+                    lista.push(`${i}(+${count - 1})`); // Ej: 5(+2)
+                }
+            }
+            if (lista.length > 0) {
+                texto += `*${team}:* ${lista.join(", ")}\n`;
+                repetidas = true;
+            }
+        });
+        if (!repetidas) texto += "Aún no tengo láminas para intercambiar. 😅\n";
+        texto += "\n";
+    }
 
-    btnCompartir.addEventListener('click', () => {
-        // Ejecuta tu función existente aquí, por ejemplo:
-         exportarFaltantes();
-    });
+    texto += "_Compartido desde Mis Laminas 2026 App_";
+    return texto;
 }
+
+// Función que invoca el menú nativo del teléfono
+function invocarCompartirNativo(textoGenerado) {
+    // Verificamos si el dispositivo soporta el menú de compartir nativo (Web Share API)
+    if (navigator.share) {
+        navigator.share({
+            title: 'Mis Láminas 2026',
+            text: textoGenerado
+        }).then(() => {
+            cerrarMenuCompartir();
+        }).catch((err) => {
+            // El usuario canceló o cerró el menú, no hacemos nada.
+            console.log("Menú de compartir cerrado.");
+        });
+    } else {
+        // Plan B: Si está en PC y no soporta share, copiamos al portapapeles
+        navigator.clipboard.writeText(textoGenerado).then(() => {
+            mostrarNotificacionTactica("¡Copiado al portapapeles! 📋");
+            cerrarMenuCompartir();
+        }).catch(err => {
+            mostrarNotificacionTactica("Error al intentar copiar.");
+        });
+    }
+}
+
+// Vincular botones del nuevo menú a la lógica
+document.getElementById('btn-share-faltantes').addEventListener('click', () => {
+    invocarCompartirNativo(generarTextoCompartir('faltantes'));
+});
+
+document.getElementById('btn-share-repetidas').addEventListener('click', () => {
+    invocarCompartirNativo(generarTextoCompartir('repetidas'));
+});
+
+document.getElementById('btn-share-ambas').addEventListener('click', () => {
+    invocarCompartirNativo(generarTextoCompartir('ambas'));
+});
+
+
+
+// --- CONTROL DE LA BARRA DE NAVEGACIÓN INFERIOR ---
 
 // 2. Botón Intercambiar del Footer (Preparado para desarrollo futuro)
 const btnNavIntercambiar = document.getElementById('btn-nav-intercambiar');
@@ -544,3 +601,5 @@ function scrollHaciaSeccion(terminoVoz) {
         mostrarNotificacionTactica(`No encontré la sección: "${terminoVoz.toUpperCase()}" 📋❌`);
     }
 }
+
+
