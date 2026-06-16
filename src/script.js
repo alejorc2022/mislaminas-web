@@ -448,7 +448,7 @@ if (btnPrincipal) {
     btnPrincipal.addEventListener('click', () => {
         aplicarFiltro('principal');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        mostrarNotificacionTactica("Mostrando: Álbum Completo 📖");
+        //mostrarNotificacionTactica("Mostrando: Álbum Completo 📖");
     });
 }
 
@@ -458,7 +458,7 @@ if (btnFaltantes) {
     btnFaltantes.addEventListener('click', () => {
         aplicarFiltro('faltantes');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        mostrarNotificacionTactica("Mostrando: Solo Láminas Faltantes 🔍");
+        //mostrarNotificacionTactica("Mostrando: Solo Láminas Faltantes 🔍");
     });
 }
 
@@ -468,7 +468,7 @@ if (btnRepetidas) {
     btnRepetidas.addEventListener('click', () => {
         aplicarFiltro('repetidas');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        mostrarNotificacionTactica("Mostrando: Tu Muro de Intercambios 🔁");
+       // mostrarNotificacionTactica("Mostrando: Tu Muro de Intercambios 🔁");
     });
 }
 
@@ -601,5 +601,110 @@ function scrollHaciaSeccion(terminoVoz) {
         mostrarNotificacionTactica(`No encontré la sección: "${terminoVoz.toUpperCase()}" 📋❌`);
     }
 }
+
+
+// ==========================================
+// SISTEMA DE EXPORTACIÓN E IMPORTACIÓN QR
+// ==========================================
+
+const modalExportar = document.getElementById('modal-exportar');
+const modalImportar = document.getElementById('modal-importar');
+const btnExportQR = document.getElementById('btn-export-qr');
+const btnImportQR = document.getElementById('btn-import-qr');
+const btnCerrarExportar = document.getElementById('btn-cerrar-exportar');
+const btnCerrarImportar = document.getElementById('btn-cerrar-importar');
+
+let html5QrcodeScanner = null;
+
+// Función para cerrar el menú principal si está abierto
+function cerrarMenusUI() {
+    const menus = document.querySelectorAll('.menu-overlay');
+    const desplegables = document.querySelectorAll('.menu-desplegable');
+    menus.forEach(m => m.classList.remove('active'));
+    desplegables.forEach(d => d.classList.remove('active'));
+    setTimeout(() => { menus.forEach(m => m.style.display = 'none'); }, 300);
+}
+
+// 1. EXPORTAR: Generar código QR
+btnExportQR.addEventListener('click', () => {
+    cerrarMenusUI();
+    modalExportar.style.display = 'flex';
+    
+    const qrContainer = document.getElementById('qr-code-container');
+    qrContainer.innerHTML = ''; // Limpiar un código anterior si lo hubiera
+    
+    // Convertimos la colección a JSON y la comprimimos a un string super corto
+    // Esto es VITAL para que la cámara pueda leer el QR rápidamente
+    const stringJson = JSON.stringify(collection);
+    const datosComprimidos = LZString.compressToEncodedURIComponent(stringJson);
+    
+    // Generar el código
+    new QRCode(qrContainer, {
+        text: datosComprimidos,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M // Nivel de corrección medio
+    });
+});
+
+btnCerrarExportar.addEventListener('click', () => {
+    modalExportar.style.display = 'none';
+});
+
+// 2. IMPORTAR: Leer código QR
+btnImportQR.addEventListener('click', () => {
+    cerrarMenusUI();
+    modalImportar.style.display = 'flex';
+    
+    // Iniciar la cámara si no está iniciada
+    if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+        
+        html5QrcodeScanner.render((textoDecodificado) => {
+            // Se ejecutará cuando la cámara lea exitosamente un código
+            try {
+                // Descomprimimos el texto leído
+                const jsonDescomprimido = LZString.decompressFromEncodedURIComponent(textoDecodificado);
+                const datosImportados = JSON.parse(jsonDescomprimido);
+                
+                // Validación básica de que es un objeto y no basura
+                if (typeof datosImportados === 'object' && datosImportados !== null) {
+                    
+                    collection = datosImportados; // Sobreescribir la colección local
+                    
+                    // Asegurarnos de usar las funciones que guardan y refrescan tu UI
+                    localStorage.setItem('mislaminas_data', JSON.stringify(collection)); 
+                    actualizarEstadisticas(); 
+                    renderSections(); // Vuelve a pintar el HTML del álbum
+                    
+                    // Apagar cámara y cerrar modal
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                    modalImportar.style.display = 'none';
+                    
+                    mostrarNotificacionTactica("¡Progreso importado con éxito! 🏆");
+                } else {
+                    throw new Error("Formato inválido");
+                }
+            } catch (e) {
+                console.error("Error leyendo QR:", e);
+                mostrarNotificacionTactica("Este código QR no es válido.");
+            }
+        }, (errorMessage) => {
+            // Ignorar los errores mientras escanea en vacío (es normal)
+        });
+    }
+});
+
+btnCerrarImportar.addEventListener('click', () => {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+        html5QrcodeScanner = null;
+    }
+    modalImportar.style.display = 'none';
+});
 
 

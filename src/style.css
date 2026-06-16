@@ -479,3 +479,68 @@ header h1 {
     font-weight: 800;
 }
 
+
+/* --- ESTILOS PARA MODALES DE QR --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background: var(--panel-dark);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    width: 90%;
+    max-width: 350px;
+    border: 1px solid var(--primary-blue);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--accent-gold);
+}
+
+.btn-cerrar-modal {
+    background: var(--primary-blue);
+    color: var(--text-white);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.btn-cerrar-modal:active {
+    background: #026aa0;
+}
+
+/* Ajustes visuales para el lector de QR de HTML5 */
+#qr-reader {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    color: #000;
+    border: none !important;
+}
+#qr-reader__dashboard_section_csr button {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 5px;
+}
+
+
