@@ -625,60 +625,96 @@ function cerrarMenusUI() {
     setTimeout(() => { menus.forEach(m => m.style.display = 'none'); }, 300);
 }
 
-// 1. EXPORTAR: Generar código QR
+// 1. EXPORTAR: Generar código QR (Formato V3 de Máxima Compresión)
 btnExportQR.addEventListener('click', () => {
     cerrarMenusUI();
     modalExportar.style.display = 'flex';
     
     const qrContainer = document.getElementById('qr-code-container');
-    qrContainer.innerHTML = ''; // Limpiar un código anterior si lo hubiera
+    qrContainer.innerHTML = ''; 
     
-    // --- NUEVA LÓGICA DE OPTIMIZACIÓN EXTREMA ---
-    // Convertimos la colección a un formato ultraligero: "MEX1:1|FWC2:3"
-    const datosOptimizados = Object.entries(collection)
-        .map(([id, count]) => `${id}:${count}`)
-        .join('|');
-        
-    // Comprimimos esta cadena ligera
+    // --- NUEVA LÓGICA V3: AGRUPACIÓN TÁCTICA DE DATOS ---
+    // Agrupamos por país para no repetir letras. Ej: "MEX:1,2,5x3"
+    let agrupado = {};
+    for (let id in collection) {
+        let count = collection[id];
+        if (count === 0) continue; 
+
+        // Separar el prefijo (País) del sufijo (Número)
+        let team = id === "00" ? "00" : id.replace(/[0-9]/g, '');
+        let num = id === "00" ? "00" : id.replace(/[^0-9]/g, '');
+
+        if (!agrupado[team]) agrupado[team] = [];
+
+        // Si solo hay 1, guardamos el número (ej: "5"). Si hay repetidas, agregamos "xCantidad" (ej: "5x3")
+        let valor = count === 1 ? num : `${num}x${count}`;
+        agrupado[team].push(valor);
+    }
+
+    // Unimos todo con el prefijo "@" para que el lector sepa que es el nuevo formato V3
+    const datosOptimizados = "@" + Object.keys(agrupado).map(team => {
+        return `${team}:${agrupado[team].join(',')}`;
+    }).join('|');
+    
     const datosComprimidos = LZString.compressToEncodedURIComponent(datosOptimizados);
     
-    // Generar el código con mayor tamaño y máxima capacidad (Level L)
-    new QRCode(qrContainer, {
-        text: datosComprimidos,
-        width: 300,  // <-- Ampliado para dibujar códigos muy densos
-        height: 300, // <-- Ampliado
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.L // <-- 'L' otorga la máxima capacidad de datos posible
+    // Generar QR de Alta Capacidad Vectorial
+    const qrCode = new QRCodeStyling({
+        width: 320,  
+        height: 320,
+        type: "svg", 
+        data: datosComprimidos,
+        dotsOptions: { color: "#000000", type: "square" },
+        backgroundOptions: { color: "#ffffff" },
+        qrOptions: { errorCorrectionLevel: 'L' }
     });
+
+    qrCode.append(qrContainer);
 });
 
 btnCerrarExportar.addEventListener('click', () => {
     modalExportar.style.display = 'none';
 });
 
-// 2. IMPORTAR: Leer código QR
+// 2. IMPORTAR: Leer código QR (Soporta V1, V2 y V3)
 btnImportQR.addEventListener('click', () => {
     cerrarMenusUI();
     modalImportar.style.display = 'flex';
     
-    // Iniciar la cámara si no está iniciada
     if (!html5QrcodeScanner) {
         html5QrcodeScanner = new Html5QrcodeScanner(
             "qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
         
         html5QrcodeScanner.render((textoDecodificado) => {
             try {
-                // Descomprimimos el texto leído
                 const jsonDescomprimido = LZString.decompressFromEncodedURIComponent(textoDecodificado);
-                let datosImportados;
+                let datosImportados = {};
                 
-                // --- COMPATIBILIDAD INTELIGENTE ---
-                // Detectamos si es el formato nuevo ("MEX1:1|FWC2:3") o un QR viejo (JSON clásico)
-                if (jsonDescomprimido.startsWith('{')) {
+                // --- DECODIFICADOR INTELIGENTE ---
+                if (jsonDescomprimido.startsWith('@')) {
+                    // Formato V3 (El nuevo y más compacto)
+                    let grupos = jsonDescomprimido.substring(1).split('|');
+                    grupos.forEach(grupo => {
+                        if (!grupo) return;
+                        let partes = grupo.split(':');
+                        let team = partes[0];
+                        let items = partes[1];
+                        
+                        if (items) {
+                            items.split(',').forEach(item => {
+                                let subPartes = item.split('x');
+                                let num = subPartes[0];
+                                let count = subPartes[1] ? parseInt(subPartes[1]) : 1;
+                                let id = (team === "00") ? "00" : team + num;
+                                datosImportados[id] = count;
+                            });
+                        }
+                    });
+                } else if (jsonDescomprimido.startsWith('{')) {
+                    // Formato V1 (JSON clásico)
                     datosImportados = JSON.parse(jsonDescomprimido);
                 } else {
-                    datosImportados = {};
+                    // Formato V2 (Lineal)
                     jsonDescomprimido.split('|').forEach(par => {
                         if (par) {
                             const [id, count] = par.split(':');
@@ -687,32 +723,26 @@ btnImportQR.addEventListener('click', () => {
                     });
                 }
                 
-                // Validación básica de que es un objeto válido
-                if (typeof datosImportados === 'object' && datosImportados !== null) {
-                    
-                    collection = datosImportados; // Sobreescribir la colección local
-                    
-                    // Guardar y refrescar la UI con las funciones correctas de tu proyecto
+                // Validar que se extrajeron datos correctamente
+                if (typeof datosImportados === 'object' && datosImportados !== null && Object.keys(datosImportados).length > 0) {
+                    collection = datosImportados; 
                     localStorage.setItem('mundial2026_data', JSON.stringify(collection)); 
                     updateProgress(); 
                     initAlbum(); 
                     
-                    // Apagar cámara y cerrar modal
                     html5QrcodeScanner.clear();
                     html5QrcodeScanner = null;
                     modalImportar.style.display = 'none';
                     
                     mostrarNotificacionTactica("¡Progreso importado con éxito! 🏆");
                 } else {
-                    throw new Error("Formato inválido");
+                    throw new Error("Datos extraídos están vacíos");
                 }
             } catch (e) {
                 console.error("Error leyendo QR:", e);
-                mostrarNotificacionTactica("Este código QR no es válido.");
+                mostrarNotificacionTactica("Este código QR no es válido o está dañado.");
             }
-        }, (errorMessage) => {
-            // Ignorar los errores mientras escanea en vacío
-        });
+        }, (errorMessage) => {});
     }
 });
 
