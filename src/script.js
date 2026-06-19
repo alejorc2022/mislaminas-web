@@ -633,19 +633,23 @@ btnExportQR.addEventListener('click', () => {
     const qrContainer = document.getElementById('qr-code-container');
     qrContainer.innerHTML = ''; // Limpiar un código anterior si lo hubiera
     
-    // Convertimos la colección a JSON y la comprimimos a un string super corto
-    // Esto es VITAL para que la cámara pueda leer el QR rápidamente
-    const stringJson = JSON.stringify(collection);
-    const datosComprimidos = LZString.compressToEncodedURIComponent(stringJson);
+    // --- NUEVA LÓGICA DE OPTIMIZACIÓN EXTREMA ---
+    // Convertimos la colección a un formato ultraligero: "MEX1:1|FWC2:3"
+    const datosOptimizados = Object.entries(collection)
+        .map(([id, count]) => `${id}:${count}`)
+        .join('|');
+        
+    // Comprimimos esta cadena ligera
+    const datosComprimidos = LZString.compressToEncodedURIComponent(datosOptimizados);
     
-    // Generar el código
+    // Generar el código con mayor tamaño y máxima capacidad (Level L)
     new QRCode(qrContainer, {
         text: datosComprimidos,
-        width: 200,
-        height: 200,
+        width: 300,  // <-- Ampliado para dibujar códigos muy densos
+        height: 300, // <-- Ampliado
         colorDark : "#000000",
         colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.M // Nivel de corrección medio
+        correctLevel : QRCode.CorrectLevel.L // <-- 'L' otorga la máxima capacidad de datos posible
     });
 });
 
@@ -664,21 +668,34 @@ btnImportQR.addEventListener('click', () => {
             "qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
         
         html5QrcodeScanner.render((textoDecodificado) => {
-            // Se ejecutará cuando la cámara lea exitosamente un código
             try {
                 // Descomprimimos el texto leído
                 const jsonDescomprimido = LZString.decompressFromEncodedURIComponent(textoDecodificado);
-                const datosImportados = JSON.parse(jsonDescomprimido);
+                let datosImportados;
                 
-                // Validación básica de que es un objeto y no basura
+                // --- COMPATIBILIDAD INTELIGENTE ---
+                // Detectamos si es el formato nuevo ("MEX1:1|FWC2:3") o un QR viejo (JSON clásico)
+                if (jsonDescomprimido.startsWith('{')) {
+                    datosImportados = JSON.parse(jsonDescomprimido);
+                } else {
+                    datosImportados = {};
+                    jsonDescomprimido.split('|').forEach(par => {
+                        if (par) {
+                            const [id, count] = par.split(':');
+                            datosImportados[id] = parseInt(count);
+                        }
+                    });
+                }
+                
+                // Validación básica de que es un objeto válido
                 if (typeof datosImportados === 'object' && datosImportados !== null) {
                     
                     collection = datosImportados; // Sobreescribir la colección local
                     
-                    // Asegurarnos de usar las funciones que guardan y refrescan tu UI
-                    localStorage.setItem('mislaminas_data', JSON.stringify(collection)); 
-                    actualizarEstadisticas(); 
-                    renderSections(); // Vuelve a pintar el HTML del álbum
+                    // Guardar y refrescar la UI con las funciones correctas de tu proyecto
+                    localStorage.setItem('mundial2026_data', JSON.stringify(collection)); 
+                    updateProgress(); 
+                    initAlbum(); 
                     
                     // Apagar cámara y cerrar modal
                     html5QrcodeScanner.clear();
@@ -694,7 +711,7 @@ btnImportQR.addEventListener('click', () => {
                 mostrarNotificacionTactica("Este código QR no es válido.");
             }
         }, (errorMessage) => {
-            // Ignorar los errores mientras escanea en vacío (es normal)
+            // Ignorar los errores mientras escanea en vacío
         });
     }
 });
