@@ -817,8 +817,8 @@ qrFileInput.addEventListener('change', async (e) => {
             .then(decodedText => {
                 // Ejecutamos exactamente la misma lógica de descompresión que ya posee tu app
                 try {
-                    // Descomprimir cadena usando tu LZString instalado
-                    const cadenaDescomprimida = LZString.decompressFromUTF16(decodedText) || LZString.decompress(decodedText);
+                    // Solución: Usar exactamente el mismo algoritmo con el que se comprimió
+                    const cadenaDescomprimida = LZString.decompressFromEncodedURIComponent(decodedText);
                     
                     if (!cadenaDescomprimida) {
                         throw new Error("Datos corruptos o vacíos al descomprimir.");
