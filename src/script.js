@@ -676,6 +676,45 @@ btnCerrarExportar.addEventListener('click', () => {
     modalExportar.style.display = 'none';
 });
 
+// --- SISTEMA DE COMPARTIR QR COMO IMAGEN NATIVA ---
+document.getElementById('btn-compartir-qr-img').addEventListener('click', async () => {
+    try {
+        // Seleccionamos el canvas dinámico generado por la librería de QR
+        const canvas = document.querySelector('#qr-code-container canvas');
+        
+        if (!canvas) {
+            mostrarNotificacionTactica("Primero debes generar el código QR.");
+            return;
+        }
+
+        // Convertimos el canvas a un archivo binario Blob (PNG)
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                mostrarNotificacionTactica("Error al procesar la imagen del QR.");
+                return;
+            }
+
+            // Creamos un objeto File compatible con el ecosistema Web Share API
+            const archivoQR = new File([blob], "mislaminas_qr.png", { type: "image/png" });
+
+            // Validación de soporte del navegador para compartir archivos
+            if (navigator.canShare && navigator.canShare({ files: [archivoQR] })) {
+                await navigator.share({
+                    files: [archivoQR],
+                    title: 'Mi Progreso de MisLaminas',
+                    text: 'Aquí tienes mi código QR con todo mi progreso guardado de MisLaminas 2026. ¡Escanéalo o impórtalo!'
+                });
+            } else {
+                mostrarNotificacionTactica("Tu dispositivo o navegador no soporta compartir imágenes directamente. Intenta con una captura de pantalla.");
+            }
+        }, 'image/png');
+
+    } catch (error) {
+        console.error("Error táctico al compartir la imagen QR:", error);
+        mostrarNotificacionTactica("No se pudo desplegar el menú para compartir.");
+    }
+});
+
 // 2. IMPORTAR: Leer código QR (Soporta V1, V2 y V3)
 btnImportQR.addEventListener('click', () => {
     cerrarMenusUI();
@@ -752,6 +791,107 @@ btnCerrarImportar.addEventListener('click', () => {
         html5QrcodeScanner = null;
     }
     modalImportar.style.display = 'none';
+});
+
+// --- SISTEMA DE IMPORTACIÓN DESDE ARCHIVO DE IMAGEN ---
+const qrFileInput = document.getElementById('qr-file-input');
+const btnCargarQrImagen = document.getElementById('btn-cargar-qr-imagen');
+
+// Detonar la selección de archivos nativa al presionar nuestro botón visual
+btnCargarQrImagen.addEventListener('click', () => {
+    qrFileInput.click();
+});
+
+// Monitorear el momento exacto en el que el usuario selecciona la foto
+qrFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+        mostrarNotificacionTactica("Procesando imagen...");
+
+        // Inicializamos el lector estático en nuestro contenedor secundario secreto
+        const lectorArchivoLocal = new Html5Qrcode("qr-file-reader-dummy");
+
+        // Ejecutar el escaneo directo sobre el archivo binario sin activar la cámara
+        lectorArchivoLocal.scanFile(file, false)
+            .then(decodedText => {
+                // Ejecutamos exactamente la misma lógica de descompresión que ya posee tu app
+                try {
+                    // Descomprimir cadena usando tu LZString instalado
+                    const cadenaDescomprimida = LZString.decompressFromUTF16(decodedText) || LZString.decompress(decodedText);
+                    
+                    if (!cadenaDescomprimida) {
+                        throw new Error("Datos corruptos o vacíos al descomprimir.");
+                    }
+
+                    // --- INICIO DE TU LÓGICA EXISTENTE DE PARSEO ---
+                    // Reconstruimos el formato del objeto de datos según tu lógica V3
+                    const datosImportados = {};
+                    
+                    if (cadenaDescomprimida.startsWith('{')) {
+                        // Respaldo por si viene en formato JSON crudo plano
+                        Object.assign(datosImportados, JSON.parse(cadenaDescomprimida));
+                    } else {
+                        // Lógica del decodificador inteligente optimizado por países (@MEX:1,2...)
+                        const bloquesPais = cadenaDescomprimida.split('@');
+                        bloquesPais.forEach(bloque => {
+                            if (!bloque.trim()) return;
+                            const [codigoPais, stringLaminas] = bloque.split(':');
+                            if (codigoPais && stringLaminas) {
+                                const items = stringLaminas.split(',');
+                                items.forEach(item => {
+                                    if (item.includes('x')) {
+                                        const [idLamina, cantidad] = item.split('x');
+                                        datosImportados[`${codigoPais}${idLamina}`] = parseInt(cantidad);
+                                    } else {
+                                        datosImportados[`${codigoPais}${item}`] = 1;
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Inyección segura de datos, guardado en LocalStorage y renderizado
+                    if (Object.keys(datosImportados).length > 0) {
+                        collection = datosImportados;
+                        localStorage.setItem('mundial2026_data', JSON.stringify(collection));
+                        
+                        // Refrescar y pintar toda la UI de forma transparente
+                        updateProgress(); 
+                        initAlbum();
+                        
+                        // Apagar el escáner de cámara principal si estaba abierto y cerrar modal
+                        if (html5QrcodeScanner) {
+                            html5QrcodeScanner.clear();
+                            html5QrcodeScanner = null;
+                        }
+                        document.getElementById('modal-importar').style.display = 'none';
+                        
+                        mostrarNotificacionTactica("¡Progreso importado desde imagen con éxito! 🏆");
+                    } else {
+                        throw new Error("Estructura de láminas inválida.");
+                    }
+                    // --- FIN DE TU LÓGICA EXISTENTE DE PARSEO ---
+
+                } catch (err) {
+                    console.error("Fallo interno parseando el QR:", err);
+                    mostrarNotificacionTactica("El QR es válido pero no corresponde al formato del álbum.");
+                }
+            })
+            .catch(err => {
+                console.error("Fallo en la lectura óptica del QR:", err);
+                mostrarNotificacionTactica("No se detectó ningún código QR en la imagen. Intenta con una foto más clara.");
+            })
+            .finally(() => {
+                // Limpiar el valor del input para permitir subir la misma foto consecutivamente si se desea
+                qrFileInput.value = "";
+            });
+
+    } catch (error) {
+        console.error("Error crítico del sistema de carga de archivos:", error);
+        mostrarNotificacionTactica("Error al inicializar el lector de archivos.");
+    }
 });
 
 
