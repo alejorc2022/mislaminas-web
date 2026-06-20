@@ -625,6 +625,9 @@ function cerrarMenusUI() {
     setTimeout(() => { menus.forEach(m => m.style.display = 'none'); }, 300);
 }
 
+// --- NUEVA VARIABLE GLOBAL PARA EL QR ---
+let qrCodeInstancia = null; 
+
 // 1. EXPORTAR: Generar código QR (Formato V3 de Máxima Compresión)
 btnExportQR.addEventListener('click', () => {
     cerrarMenusUI();
@@ -633,87 +636,83 @@ btnExportQR.addEventListener('click', () => {
     const qrContainer = document.getElementById('qr-code-container');
     qrContainer.innerHTML = ''; 
     
-    // --- NUEVA LÓGICA V3: AGRUPACIÓN TÁCTICA DE DATOS ---
-    // Agrupamos por país para no repetir letras. Ej: "MEX:1,2,5x3"
+    // --- LÓGICA V3: AGRUPACIÓN TÁCTICA DE DATOS ---
     let agrupado = {};
     for (let id in collection) {
         let count = collection[id];
         if (count === 0) continue; 
 
-        // Separar el prefijo (País) del sufijo (Número)
         let team = id === "00" ? "00" : id.replace(/[0-9]/g, '');
         let num = id === "00" ? "00" : id.replace(/[^0-9]/g, '');
 
         if (!agrupado[team]) agrupado[team] = [];
-
-        // Si solo hay 1, guardamos el número (ej: "5"). Si hay repetidas, agregamos "xCantidad" (ej: "5x3")
         let valor = count === 1 ? num : `${num}x${count}`;
         agrupado[team].push(valor);
     }
 
-    // Unimos todo con el prefijo "@" para que el lector sepa que es el nuevo formato V3
     const datosOptimizados = "@" + Object.keys(agrupado).map(team => {
         return `${team}:${agrupado[team].join(',')}`;
     }).join('|');
     
     const datosComprimidos = LZString.compressToEncodedURIComponent(datosOptimizados);
     
-    // Generar QR de Alta Capacidad Vectorial
-    const qrCode = new QRCodeStyling({
+    // Generar QR y guardarlo en nuestra variable global
+    qrCodeInstancia = new QRCodeStyling({
         width: 320,  
         height: 320,
-        type: "svg", 
+        type: "svg", // Mantenemos la nitidez vectorial en pantalla
         data: datosComprimidos,
         dotsOptions: { color: "#000000", type: "square" },
         backgroundOptions: { color: "#ffffff" },
         qrOptions: { errorCorrectionLevel: 'L' }
     });
 
-    qrCode.append(qrContainer);
+    qrCodeInstancia.append(qrContainer);
 });
 
 btnCerrarExportar.addEventListener('click', () => {
     modalExportar.style.display = 'none';
 });
 
-// --- SISTEMA DE COMPARTIR QR COMO IMAGEN NATIVA ---
+
+// --- SISTEMA DE COMPARTIR QR COMO IMAGEN NATIVA (ACTUALIZADO) ---
 document.getElementById('btn-compartir-qr-img').addEventListener('click', async () => {
+    // 1. Verificamos la instancia en lugar del HTML
+    if (!qrCodeInstancia) {
+        mostrarNotificacionTactica("Primero debes generar el código QR.");
+        return;
+    }
+
     try {
-        // Seleccionamos el canvas dinámico generado por la librería de QR
-        const canvas = document.querySelector('#qr-code-container canvas');
+        mostrarNotificacionTactica("Preparando imagen... ⏳");
         
-        if (!canvas) {
-            mostrarNotificacionTactica("Primero debes generar el código QR.");
+        // 2. Extraemos el archivo directamente de la memoria de la librería
+        const blob = await qrCodeInstancia.getRawData("png");
+        
+        if (!blob) {
+            mostrarNotificacionTactica("Error al procesar la imagen del QR.");
             return;
         }
 
-        // Convertimos el canvas a un archivo binario Blob (PNG)
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                mostrarNotificacionTactica("Error al procesar la imagen del QR.");
-                return;
-            }
+        // 3. Creamos el archivo y lo pasamos al menú del teléfono
+        const archivoQR = new File([blob], "mislaminas_qr.png", { type: "image/png" });
 
-            // Creamos un objeto File compatible con el ecosistema Web Share API
-            const archivoQR = new File([blob], "mislaminas_qr.png", { type: "image/png" });
-
-            // Validación de soporte del navegador para compartir archivos
-            if (navigator.canShare && navigator.canShare({ files: [archivoQR] })) {
-                await navigator.share({
-                    files: [archivoQR],
-                    title: 'Mi Progreso de MisLaminas',
-                    text: 'Aquí tienes mi código QR con todo mi progreso guardado de MisLaminas 2026. ¡Escanéalo o impórtalo!'
-                });
-            } else {
-                mostrarNotificacionTactica("Tu dispositivo o navegador no soporta compartir imágenes directamente. Intenta con una captura de pantalla.");
-            }
-        }, 'image/png');
+        if (navigator.canShare && navigator.canShare({ files: [archivoQR] })) {
+            await navigator.share({
+                files: [archivoQR],
+                title: 'Mi Progreso de MisLaminas',
+                text: 'Aquí tienes mi código QR con todo mi progreso guardado de MisLaminas 2026. ¡Escanéalo o impórtalo desde la galería!'
+            });
+        } else {
+            mostrarNotificacionTactica("Tu dispositivo no soporta compartir imágenes directamente. Intenta con una captura de pantalla.");
+        }
 
     } catch (error) {
         console.error("Error táctico al compartir la imagen QR:", error);
         mostrarNotificacionTactica("No se pudo desplegar el menú para compartir.");
     }
 });
+
 
 // 2. IMPORTAR: Leer código QR (Soporta V1, V2 y V3)
 btnImportQR.addEventListener('click', () => {
