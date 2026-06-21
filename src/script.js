@@ -825,31 +825,41 @@ qrFileInput.addEventListener('change', async (e) => {
                     }
 
                     // --- INICIO DE TU LÓGICA EXISTENTE DE PARSEO ---
-                    // Reconstruimos el formato del objeto de datos según tu lógica V3
+                    // Reconstruimos el formato del objeto de datos
                     const datosImportados = {};
                     
-                    if (cadenaDescomprimida.startsWith('{')) {
-                        // Respaldo por si viene en formato JSON crudo plano
-                        Object.assign(datosImportados, JSON.parse(cadenaDescomprimida));
-                    } else {
-                        // Lógica del decodificador inteligente optimizado por países (@MEX:1,2...)
-                        const bloquesPais = cadenaDescomprimida.split('@');
-                        bloquesPais.forEach(bloque => {
-                            if (!bloque.trim()) return;
-                            const [codigoPais, stringLaminas] = bloque.split(':');
-                            if (codigoPais && stringLaminas) {
-                                const items = stringLaminas.split(',');
-                                items.forEach(item => {
-                                    if (item.includes('x')) {
-                                        const [idLamina, cantidad] = item.split('x');
-                                        datosImportados[`${codigoPais}${idLamina}`] = parseInt(cantidad);
-                                    } else {
-                                        datosImportados[`${codigoPais}${item}`] = 1;
-                                    }
+                    if (cadenaDescomprimida.startsWith('@')) {
+                        // Formato V3 (El nuevo y más compacto)
+                        let grupos = cadenaDescomprimida.substring(1).split('|');
+                        grupos.forEach(grupo => {
+                            if (!grupo) return;
+                            let partes = grupo.split(':');
+                            let team = partes[0];
+                            let items = partes[1];
+                            
+                            if (items) {
+                                items.split(',').forEach(item => {
+                                    let subPartes = item.split('x');
+                                    let num = subPartes[0];
+                                    let count = subPartes[1] ? parseInt(subPartes[1]) : 1;
+                                    let id = (team === "00") ? "00" : team + num;
+                                    datosImportados[id] = count;
                                 });
                             }
                         });
+                    } else if (cadenaDescomprimida.startsWith('{')) {
+                        // Respaldo por si viene en formato JSON crudo plano (V1)
+                        Object.assign(datosImportados, JSON.parse(cadenaDescomprimida));
+                    } else {
+                        // Formato V2 Lineal clásico
+                        cadenaDescomprimida.split('|').forEach(par => {
+                            if (par) {
+                                const [id, count] = par.split(':');
+                                datosImportados[id] = parseInt(count);
+                            }
+                        });
                     }
+                    // --- FIN DE LA NUEVA LÓGICA DE PARSEO ---
 
                     // Inyección segura de datos, guardado en LocalStorage y renderizado
                     if (Object.keys(datosImportados).length > 0) {
