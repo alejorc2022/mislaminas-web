@@ -32,6 +32,12 @@
                 <div id="progress-bar"></div>
                 <span id="progress-text">0 / 994 (0.0%) FALTAN 994</span>
             </div>
+            <div id="search-container" class="search-container" style="display: none;">
+                <svg class="search-icon" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <input type="text" id="input-busqueda" placeholder="Buscar país o selección..." autocomplete="off">
+            </div>
         </div>
     </header>
 
@@ -83,6 +89,13 @@
             <button id="btn-menu-instalar" class="menu-option-btn">
                 <svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
                 <span>Instalar como aplicación</span>
+            </button>
+
+            <button id="btn-menu-buscar" class="menu-option-btn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <span id="txt-btn-buscar">Búsqueda por texto</span>
             </button>
 
             <button id="btn-export-qr" class="menu-option-btn">

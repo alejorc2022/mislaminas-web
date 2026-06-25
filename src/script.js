@@ -197,6 +197,7 @@ let modoActual = 'principal'; // Estado inicial de la app
 function aplicarFiltro(modo) {
     modoActual = modo;
     const secciones = document.querySelectorAll('.team-section');
+    let totalSeccionesVisibles = 0; // NUEVO: Contador para saber si la pantalla quedó vacía
 
     secciones.forEach(seccion => {
         let stickersVisibles = 0;
@@ -227,8 +228,25 @@ function aplicarFiltro(modo) {
             seccion.style.display = 'none';
         } else {
             seccion.style.display = 'block';
+            totalSeccionesVisibles++; // Sumamos las secciones que sí tienen contenido
         }
     });
+
+    // NUEVO: Lógica inteligente para ocultar/mostrar la barra de búsqueda
+    const searchContainer = document.getElementById('search-container');
+    if (searchContainer) {
+        // Si la vista está completamente vacía (ej. no hay repetidas)
+        if (totalSeccionesVisibles === 0) {
+            searchContainer.style.display = 'none';
+        } else {
+            // Si hay contenido, mostramos la barra SOLO si el usuario la había activado previamente
+            if (buscadorActivo) {
+                searchContainer.style.display = 'flex';
+            } else {
+                searchContainer.style.display = 'none';
+            }
+        }
+    }
 
     // Actualizar el diseño visual de los botones inferiores
     document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => btn.classList.remove('active-tab'));
@@ -519,6 +537,11 @@ function iniciarBusquedaPorVoz() {
         return;
     }
 
+    if (document.getElementById('input-busqueda')) {
+    document.getElementById('input-busqueda').value = ''; 
+    filtrarEquipos(''); // Restaura el álbum completo antes de saltar a la sección dictada
+     }
+
     const recognition = new SpeechRecognition();
     recognition.lang = 'es-ES'; // Configuración estricta en español
     recognition.interimResults = false;
@@ -587,7 +610,10 @@ function scrollHaciaSeccion(terminoVoz) {
     // 4. Ejecutar el desplazamiento suave (Scroll) si se halló la sección
     if (codigoEncontrado) {
         const elementoSeccion = document.getElementById(`sec-${codigoEncontrado}`);
-        if (elementoSeccion) {
+        
+        // NUEVA VALIDACIÓN: Asegurarnos de que la sección esté visible en la vista actual
+        // antes de intentar hacer el desplazamiento.
+        if (elementoSeccion && elementoSeccion.style.display !== 'none') {
             // Desplazamiento nativo super fluido optimizado para celular
             elementoSeccion.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
@@ -596,10 +622,14 @@ function scrollHaciaSeccion(terminoVoz) {
             setTimeout(() => {
                 elementoSeccion.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
             }, 1500);
+        } else {
+            // Si la sección existe pero está oculta por el filtro actual, avisamos al usuario
+            mostrarNotificacionTactica(`No hay láminas de "${terminoVoz.toUpperCase()}" en esta vista 📋`);
         }
     } else {
         mostrarNotificacionTactica(`No encontré la sección: "${terminoVoz.toUpperCase()}" 📋❌`);
     }
+
 }
 
 
@@ -904,3 +934,102 @@ qrFileInput.addEventListener('change', async (e) => {
 });
 
 
+// ==========================================
+// SISTEMA DE BÚSQUEDA POR TEXTO EN TIEMPO REAL
+// ==========================================
+const btnMenuBuscar = document.getElementById('btn-menu-buscar');
+const searchContainer = document.getElementById('search-container');
+const inputBusqueda = document.getElementById('input-busqueda');
+const txtBtnBuscar = document.getElementById('txt-btn-buscar');
+
+// Recupera el estado guardado, si no existe, por defecto es false
+let buscadorActivo = localStorage.getItem('buscadorActivo') === 'true';
+
+// 1. Mostrar/Ocultar el buscador desde el menú
+if(btnMenuBuscar) {
+    btnMenuBuscar.addEventListener('click', () => {
+        buscadorActivo = !buscadorActivo;
+
+        // --- NUEVA LÍNEA: Guardamos el estado persistente ---
+        localStorage.setItem('buscadorActivo', buscadorActivo);
+        
+        // Revisamos si hay al menos una sección visible en pantalla en este momento
+        const haySeccionesVisibles = Array.from(document.querySelectorAll('.team-section')).some(sec => sec.style.display === 'block');
+
+        if (buscadorActivo) {
+            txtBtnBuscar.textContent = 'Ocultar búsqueda por texto';
+            
+            if (haySeccionesVisibles) {
+                searchContainer.style.display = 'flex';
+                // Pequeño retraso para enfocar automáticamente el teclado en celulares
+                setTimeout(() => inputBusqueda.focus(), 300);
+            } else {
+                // Si la vista está vacía, no mostramos la barra y le avisamos con estilo táctico
+                if (typeof mostrarNotificacionTactica === 'function') {
+                    mostrarNotificacionTactica("No hay láminas en esta vista para buscar. 🔍");
+                }
+            }
+        } else {
+            searchContainer.style.display = 'none';
+            txtBtnBuscar.textContent = 'Búsqueda por texto';
+            inputBusqueda.value = ''; // Limpiar campo
+            filtrarEquipos(''); // Restaurar todos los equipos a la vista
+        }
+        
+        // Cerrar el menú principal al hacer clic
+        const menuDesplegable = document.getElementById('menu-desplegable');
+        const menuOverlay = document.getElementById('menu-overlay');
+        if(menuDesplegable) menuDesplegable.classList.remove('active');
+        if(menuOverlay) menuOverlay.style.display = 'none';
+    });
+}
+
+// 2. Filtrado dinámico mientras se escribe
+if(inputBusqueda) {
+    inputBusqueda.addEventListener('input', (e) => {
+        const termino = e.target.value.toLowerCase().trim();
+        filtrarEquipos(termino);
+    });
+}
+
+// Función maestra para ocultar/mostrar secciones según el texto (Unificada con lógica de Voz)
+function filtrarEquipos(termino) {
+    // NUEVO: Si el input está vacío, delegamos el control al motor de vistas 
+    // para que restaure el estado correcto del álbum (Faltantes/Repetidas/Principal)
+    if (termino === '') {
+        aplicarFiltro(modoActual);
+        return;
+    }
+
+    const secciones = document.querySelectorAll('.team-section');
+    
+    secciones.forEach(seccion => {
+        const idEquipo = seccion.id.replace('sec-', '');
+        let coincide = false;
+
+        // 1. Buscar por abreviatura exacta o parcial (ej: "mex" o "col")
+        if (idEquipo.toLowerCase().includes(termino)) coincide = true;
+
+        // 2. Buscar por el nombre completo en español usando nuestro diccionario global
+        if (TEAM_NAMES[idEquipo] && TEAM_NAMES[idEquipo].toLowerCase().includes(termino)) coincide = true;
+
+        // 3. Unificación con Búsqueda por Voz: Aliases Inteligentes
+        if (idEquipo === "ESPECIALES" && (termino.includes("especial") || termino.includes("00") || termino.includes("esenciales"))) coincide = true;
+        if (idEquipo === "CC" && (termino.includes("coca") || termino.includes("cola"))) coincide = true;
+        if (idEquipo === "FWC" && (termino.includes("fútbol world") || termino.includes("fifa") || termino.includes("fwc"))) coincide = true;
+
+        // NUEVA VALIDACIÓN TÁCTICA: Si coincide con la búsqueda, 
+        // verificamos que la sección tenga al menos una lámina visible en la vista actual.
+        if (coincide) {
+            const tieneLaminasVisibles = Array.from(seccion.querySelectorAll('.sticker')).some(sticker => sticker.style.display !== 'none');
+            
+            if (tieneLaminasVisibles) {
+                seccion.style.display = 'block';
+            } else {
+                seccion.style.display = 'none'; // Se oculta para no dejar contenedores vacíos
+            }
+        } else {
+            seccion.style.display = 'none';
+        }
+    });
+}

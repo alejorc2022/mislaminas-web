@@ -543,4 +543,39 @@ header h1 {
     margin: 5px;
 }
 
+/* --- BUSCADOR DE TEXTO DINÁMICO --- */
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: var(--panel-dark);
+    border: 1px solid var(--primary-blue);
+    border-radius: 20px;
+    margin-top: 12px; /* Separación fluida de la barra de progreso */
+    padding: 8px 15px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-muted);
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+#input-busqueda {
+    background: transparent;
+    border: none;
+    color: var(--text-white);
+    width: 100%;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+}
+
+#input-busqueda::placeholder {
+    color: var(--text-muted);
+}
+
 
