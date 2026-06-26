@@ -3,10 +3,10 @@
   "name": "Mis Laminas 26 App",
   "icons": [
     {
-      "src": "https://iili.io/CA8ZQ0G.png",
+      "src": "https://iili.io/CASDTzB.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "start_url": "./index.html",

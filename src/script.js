@@ -731,7 +731,7 @@ document.getElementById('btn-compartir-qr-img').addEventListener('click', async 
             await navigator.share({
                 files: [archivoQR],
                 title: 'Mi Progreso de MisLaminas',
-                text: 'Aquí tienes mi código QR con todo mi progreso guardado de MisLaminas 2026. ¡Escanéalo o impórtalo desde la galería!'
+                text: 'Aquí tienes mi código QR con todo mi progreso guardado de MisLaminas 26. ¡Impórtalo desde la galería!'
             });
         } else {
             mostrarNotificacionTactica("Tu dispositivo no soporta compartir imágenes directamente. Intenta con una captura de pantalla.");
