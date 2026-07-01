@@ -253,6 +253,14 @@ function aplicarFiltro(modo) {
     if (modo === 'principal') document.getElementById('btn-nav-principal')?.classList.add('active-tab');
     if (modo === 'faltantes') document.getElementById('btn-nav-faltantes')?.classList.add('active-tab');
     if (modo === 'repetidas') document.getElementById('btn-nav-repetidas')?.classList.add('active-tab');
+
+
+    // --- NUEVO CÓDIGO: Mantener el filtro de texto al cambiar de pestaña ---
+    const inputBusquedaElemento = document.getElementById('input-busqueda');
+    if (inputBusquedaElemento && inputBusquedaElemento.value.trim() !== '') {
+        // Si hay texto escrito, re-filtramos las secciones resultantes usando esa palabra
+        filtrarEquipos(inputBusquedaElemento.value.toLowerCase().trim());
+    }
 }
 
 function saveToLocal() {
